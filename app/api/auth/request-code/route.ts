@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
     }
 
-    await cleanupExpiredAuthRecords();
+    // TODO: Cleanup expired records when AuthSession table is properly set up
+    // await cleanupExpiredAuthRecords();
 
     const user = await prisma.user.findUnique({ where: { email } });
     const invite = await prisma.invite.findUnique({ where: { email } });
