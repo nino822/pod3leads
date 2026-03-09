@@ -108,6 +108,66 @@ export async function validateLoginCode(email: string, code: string) {
   return { ok: true as const };
 }
 
+export async function createPasswordResetCode(userId: string) {
+  const code = generateLoginCode();
+  const codeHash = createHmac("sha256", getSessionSecret()).update(`${userId}:${code}`).digest("hex");
+  const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000);
+
+  await prisma.passwordResetCode.deleteMany({ where: { userId } });
+  await prisma.passwordResetCode.create({
+    data: {
+      userId,
+      codeHash,
+      expiresAt,
+    },
+  });
+
+  return code;
+}
+
+export async function validatePasswordResetCode(userId: string, code: string) {
+  const resetCode = await prisma.passwordResetCode.findFirst({
+    where: {
+      userId,
+      expiresAt: { gt: new Date() },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!resetCode) {
+    return { ok: false as const, reason: "Reset code expired or not found" };
+  }
+
+  if (resetCode.attempts >= MAX_CODE_ATTEMPTS) {
+    await prisma.passwordResetCode.delete({ where: { id: resetCode.id } });
+    return { ok: false as const, reason: "Too many attempts" };
+  }
+
+  const codeHash = createHmac("sha256", getSessionSecret()).update(`${userId}:${code.trim()}`).digest("hex");
+  const stored = Buffer.from(resetCode.codeHash);
+  const current = Buffer.from(codeHash);
+
+  if (stored.length !== current.length) {
+    await prisma.passwordResetCode.update({
+      where: { id: resetCode.id },
+      data: { attempts: { increment: 1 } },
+    });
+    return { ok: false as const, reason: "Invalid code" };
+  }
+
+  const valid = timingSafeEqual(stored, current);
+  if (!valid) {
+    await prisma.passwordResetCode.update({
+      where: { id: resetCode.id },
+      data: { attempts: { increment: 1 } },
+    });
+    return { ok: false as const, reason: "Invalid code" };
+  }
+
+  await prisma.passwordResetCode.deleteMany({ where: { userId } });
+  return { ok: true as const };
+}
+
 export async function createUserSession(userId: string) {
   const rawToken = randomBytes(32).toString("hex");
   const tokenHash = sha256(rawToken + getSessionSecret());

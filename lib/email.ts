@@ -116,3 +116,54 @@ export async function sendLoginCodeEmail(toEmail: string, code: string) {
     };
   }
 }
+
+export async function sendPasswordResetEmail(toEmail: string, code: string) {
+  try {
+    const subject = "Reset your Pod 3 Dashboard password";
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+            .content { background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px; }
+            .code { font-size: 32px; letter-spacing: 6px; font-weight: bold; color: #dc2626; margin: 20px 0; }
+            .warning { color: #dc2626; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Password Reset Request</h1>
+            </div>
+            <div class="content">
+              <p>We received a request to reset your password. Use this one-time code:</p>
+              <div class="code">${code}</div>
+              <p>This code expires in 10 minutes.</p>
+              <p><span class="warning">⚠️ Important:</span> If you did not request a password reset, please ignore this email or contact support.</p>
+              <p>Your account security is important to us. Never share this code with anyone.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: toEmail,
+      subject,
+      html: htmlContent,
+      text: `Your password reset code for Pod 3 Dashboard is ${code}. This code expires in 10 minutes. If you did not request this, please ignore this email.`,
+    });
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`Failed to send password reset email to ${toEmail}:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

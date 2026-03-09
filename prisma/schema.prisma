@@ -64,6 +64,17 @@ model LoginCode {
   @@index([email, createdAt])
 }
 
+model PasswordResetCode {
+  id        String   @id @default(cuid())
+  userId    String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
 model AuthSession {
   id         String   @id @default(cuid())
   userId     String

@@ -227,140 +227,360 @@ export default function Dashboard() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const forgotEmail = email || "";
+    if (!forgotEmail) {
+      setAuthError("Please enter your email first");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const result = await res.json();
+      setAuthError(result.message || "Check your email for password reset code");
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "Failed to send reset code");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <motion.div
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="text-slate-300"
+        >
+          <div className="w-8 h-8 border-3 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
+        </motion.div>
       </div>
     );
   }
 
   if (status === "unauthenticated") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full"
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="relative w-full max-w-md"
         >
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Pod 3 Dashboard</h1>
-          <p className="text-gray-600 mb-6">
-            Sign in with your work email, password, and one-time code
-          </p>
-
-          <div className="space-y-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-            />
-
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password (required if set on your account)"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-            />
-
-            {!codeSent ? (
-              <button
-                onClick={handleRequestCode}
-                disabled={authLoading || !email}
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition disabled:opacity-50"
+          {/* Card with glassmorphism effect */}
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
+            {/* Logo/Title */}
+            <div className="mb-8">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
               >
-                {authLoading ? "Sending code..." : "Send Login Code"}
-              </button>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="Enter 6-digit code"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                />
-                <button
-                  onClick={handleVerifyCode}
-                  disabled={authLoading || !code}
-                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-4 rounded-lg transition disabled:opacity-50"
-                >
-                  {authLoading ? "Verifying..." : "Verify and Sign In"}
-                </button>
-                <button
-                  onClick={() => setCodeSent(false)}
-                  disabled={authLoading}
-                  className="w-full text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Use a different email/password
-                </button>
-              </>
-            )}
-          </div>
+                <div className="flex items-center justify-center mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">P3</span>
+                  </div>
+                </div>
+                <h1 className="text-3xl font-bold text-white text-center mb-2">
+                  Pod 3 Dashboard
+                </h1>
+                <p className="text-slate-300 text-center text-sm">
+                  Access your leads and team metrics
+                </p>
+              </motion.div>
+            </div>
 
-          {authError && <p className="text-red-600 text-sm mt-4">{authError}</p>}
+            {/* Form */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="space-y-4"
+            >
+              {/* Email Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-200">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !codeSent) handleRequestCode();
+                  }}
+                  placeholder="you@company.com"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
+                />
+              </div>
+
+              {/* Password Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-200">
+                  Password <span className="text-slate-400 text-xs font-normal">(optional)</span>
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !codeSent) handleRequestCode();
+                  }}
+                  placeholder="Leave empty if you haven't set one"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
+                />
+              </div>
+
+              {/* Code Input (shown after sending code) */}
+              {codeSent && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-2"
+                >
+                  <label className="block text-sm font-medium text-slate-200">
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && code.length === 6) handleVerifyCode();
+                    }}
+                    placeholder="000000"
+                    maxLength={6}
+                    inputMode="numeric"
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition text-center text-2xl tracking-widest font-mono"
+                  />
+                  <p className="text-xs text-slate-400 text-center">
+                    Code sent to your email. Expires in 10 minutes.
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Error Message */}
+              {authError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`text-sm p-3 rounded-lg ${
+                    authError.toLowerCase().includes("check your email")
+                      ? "bg-green-500/20 border border-green-500/30 text-green-300"
+                      : "bg-red-500/20 border border-red-500/30 text-red-300"
+                  }`}
+                >
+                  {authError}
+                </motion.div>
+              )}
+
+              {/* Primary Action Button */}
+              {!codeSent ? (
+                <button
+                  onClick={handleRequestCode}
+                  disabled={authLoading || !email}
+                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                >
+                  {authLoading ? (
+                    <span className="flex items-center justify-center">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                      Sending code...
+                    </span>
+                  ) : (
+                    "Send Login Code"
+                  )}
+                </button>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-2"
+                >
+                  <button
+                    onClick={handleVerifyCode}
+                    disabled={authLoading || code.length !== 6}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {authLoading ? (
+                      <span className="flex items-center justify-center">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                        Verifying...
+                      </span>
+                    ) : (
+                      "Verify and Sign In"
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCodeSent(false);
+                      setCode("");
+                      setAuthError(null);
+                    }}
+                    disabled={authLoading}
+                    className="w-full text-slate-300 hover:text-white text-sm font-medium py-2 transition"
+                  >
+                    Use different credentials
+                  </button>
+                </motion.div>
+              )}
+
+              {/* Forgot Password Link */}
+              {!codeSent && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="pt-2 text-center"
+                >
+                  <button
+                    onClick={handleForgotPassword}
+                    disabled={authLoading || !email}
+                    className="text-sm text-cyan-300 hover:text-cyan-200 font-medium disabled:text-slate-500 transition"
+                  >
+                    Forgot your password?
+                  </button>
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* Footer */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8 pt-6 border-t border-white/10 text-center"
+            >
+              <p className="text-xs text-slate-400">
+                Secure login with encrypted codes · No social account required
+              </p>
+            </motion.div>
+          </div>
         </motion.div>
+
+        {/* Bottom text */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-slate-400 text-sm mt-8"
+        >
+          Pod 3 • Performance Analytics
+        </motion.p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Pod 3 Dashboard</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Welcome, {user?.displayName || user?.name || user?.email}!
-            </p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Modern Header */}
+      <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200/50 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center space-x-3"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold">P3</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                Pod 3
+              </h1>
+              <p className="text-xs text-slate-500">Performance Dashboard</p>
+            </div>
+          </motion.div>
           <ProfileDropdown displayName={user?.displayName || user?.name || undefined} email={user?.email || undefined} />
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Error Alert */}
         {error && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-xl mb-8 flex items-center space-x-3"
           >
-            {error}
+            <span className="text-xl">⚠️</span>
+            <div>
+              <p className="font-semibold">Error loading data</p>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
           </motion.div>
         )}
 
-        {data && showKpiCards && <PodStats stats={data.podStats} />}
-
-        {data && (
-          <MonthlyTotals
-            totals={data.monthlyTotals}
-            weeklyData={data.weeklyData}
-            currentYear={filters.year}
-            selectedYear={filters.year}
-            onYearChange={handleYearChange}
-            onRefresh={fetchLeads}
-            refreshing={loading}
-          />
+        {/* KPI Cards */}
+        {data && showKpiCards && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <PodStats stats={data.podStats} />
+          </motion.div>
         )}
 
+        {/* Monthly Totals Chart */}
         {data && (
-          <TeamPerformance
-            data={data.teamPerformance}
-            atRiskAccounts={data.atRiskAccounts}
-            selectedYear={filters.year}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <MonthlyTotals
+              totals={data.monthlyTotals}
+              weeklyData={data.weeklyData}
+              currentYear={filters.year}
+              selectedYear={filters.year}
+              onYearChange={handleYearChange}
+              onRefresh={fetchLeads}
+              refreshing={loading}
+            />
+          </motion.div>
         )}
 
+        {/* Team Performance */}
         {data && (
-          <WeeklyTable
-            data={filteredWeeklyData}
-            statusFilters={filters.statuses}
-            areAllStatusesSelected={areAllStatusesSelected}
-            onStatusToggle={handleStatusToggle}
-            onAllStatusesToggle={handleAllStatusesToggle}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <TeamPerformance
+              data={data.teamPerformance}
+              atRiskAccounts={data.atRiskAccounts}
+              selectedYear={filters.year}
+            />
+          </motion.div>
+        )}
+
+        {/* Weekly Data Table */}
+        {data && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <WeeklyTable
+              data={filteredWeeklyData}
+              statusFilters={filters.statuses}
+              areAllStatusesSelected={areAllStatusesSelected}
+              onStatusToggle={handleStatusToggle}
+              onAllStatusesToggle={handleAllStatusesToggle}
+            />
+          </motion.div>
         )}
       </main>
     </div>

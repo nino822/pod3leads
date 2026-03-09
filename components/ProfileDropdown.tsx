@@ -1,6 +1,5 @@
 "use client";
 
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,16 +31,10 @@ export default function ProfileDropdown({ displayName, email }: ProfileDropdownP
     setSigningOut(true);
     setIsOpen(false);
     try {
-      const result = await signOut({
-        redirect: false,
-        callbackUrl: window.location.origin,
+      await fetch("/api/auth/logout", {
+        method: "POST",
       });
-
-      if (result?.url) {
-        window.location.href = result.url;
-      } else {
-        window.location.href = "/";
-      }
+      window.location.href = "/";
     } catch {
       setSigningOut(false);
     }
