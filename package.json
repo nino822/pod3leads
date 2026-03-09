@@ -13,7 +13,6 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@next-auth/prisma-adapter": "^1.0.0",
     "@prisma/client": "^5.0.0",
     "@types/node": "^20",
     "@types/react": "^19.2.14",
@@ -25,7 +24,6 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "next": "^16.1.6",
-    "next-auth": "^4.24.0",
     "nodemailer": "^7.0.13",
     "papaparse": "^5.4.1",
     "postcss": "^8.5.8",

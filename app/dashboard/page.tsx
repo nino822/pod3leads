@@ -1,6 +1,5 @@
 "use client";
 
-import { useSession, signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import PodStats from "@/components/PodStats";
@@ -9,6 +8,7 @@ import ProfileDropdown from "@/components/ProfileDropdown";
 import { WeeklyClientData } from "@/lib/transform";
 import MonthlyTotals from "@/components/MonthlyTotals";
 import TeamPerformance from "@/components/TeamPerformance";
+import { useAuth } from "@/lib/useAuth";
 
 type ClientStatus = "active" | "engagement only" | "onboarding" | "paused";
 
@@ -96,7 +96,7 @@ interface PodData {
 }
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
+  const { user, status, refresh } = useAuth();
   const [data, setData] = useState<PodData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +110,13 @@ export default function Dashboard() {
     } as Record<ClientStatus, boolean>,
   });
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const showKpiCards = filters.year !== 2025;
 
   const filteredWeeklyData =
@@ -119,18 +126,11 @@ export default function Dashboard() {
 
   const areAllStatusesSelected = Object.values(filters.statuses).every(Boolean);
 
-  const exportData = data
-    ? {
-        ...data,
-        weeklyData: filteredWeeklyData,
-      }
-    : null;
-
   useEffect(() => {
-    if (session?.accessToken) {
+    if (status === "authenticated") {
       fetchLeads();
     }
-  }, [session, filters.year]);
+  }, [status, filters.year]);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -139,18 +139,14 @@ export default function Dashboard() {
     try {
       const params = new URLSearchParams();
       if (filters.year) {
-        params.append('year', filters.year.toString());
+        params.append("year", filters.year.toString());
       }
-      
+
       const res = await fetch(`/api/leads?${params.toString()}`);
 
-      if (res.status === 401) {
-        setError("Please sign in with your Google account");
-        return;
-      }
-
       if (!res.ok) {
-        throw new Error("Failed to fetch data");
+        const failed = await res.json().catch(() => ({ error: "Failed to fetch data" }));
+        throw new Error(failed.error || "Failed to fetch data");
       }
 
       const result = await res.json();
@@ -166,12 +162,12 @@ export default function Dashboard() {
     setFilters((prev) => ({ ...prev, year }));
   };
 
-  const handleStatusToggle = (status: ClientStatus, checked: boolean) => {
+  const handleStatusToggle = (statusValue: ClientStatus, checked: boolean) => {
     setFilters((prev) => ({
       ...prev,
       statuses: {
         ...prev.statuses,
-        [status]: checked,
+        [statusValue]: checked,
       },
     }));
   };
@@ -188,6 +184,49 @@ export default function Dashboard() {
     }));
   };
 
+  const handleRequestCode = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const res = await fetch("/api/auth/request-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || "Failed to send code");
+      }
+      setCodeSent(true);
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "Failed to send code");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const res = await fetch("/api/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || "Invalid verification code");
+      }
+      await refresh();
+      setCode("");
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "Failed to verify code");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -198,24 +237,70 @@ export default function Dashboard() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-xl p-8 max-w-md"
+          className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full"
         >
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Pod 3 Dashboard
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Pod 3 Dashboard</h1>
           <p className="text-gray-600 mb-6">
-            Sign in with your Google account to access the leads dashboard
+            Sign in with your work email, password, and one-time code
           </p>
-          <button
-            onClick={() => signIn("google")}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition"
-          >
-            Sign in with Google
-          </button>
+
+          <div className="space-y-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@company.com"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+            />
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password (required if set on your account)"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+            />
+
+            {!codeSent ? (
+              <button
+                onClick={handleRequestCode}
+                disabled={authLoading || !email}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition disabled:opacity-50"
+              >
+                {authLoading ? "Sending code..." : "Send Login Code"}
+              </button>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="Enter 6-digit code"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+                <button
+                  onClick={handleVerifyCode}
+                  disabled={authLoading || !code}
+                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-4 rounded-lg transition disabled:opacity-50"
+                >
+                  {authLoading ? "Verifying..." : "Verify and Sign In"}
+                </button>
+                <button
+                  onClick={() => setCodeSent(false)}
+                  disabled={authLoading}
+                  className="w-full text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Use a different email/password
+                </button>
+              </>
+            )}
+          </div>
+
+          {authError && <p className="text-red-600 text-sm mt-4">{authError}</p>}
         </motion.div>
       </div>
     );
@@ -223,23 +308,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Pod 3 Dashboard</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Welcome, {session?.user?.displayName || session?.user?.name || session?.user?.email}!
+              Welcome, {user?.displayName || user?.name || user?.email}!
             </p>
           </div>
-          <ProfileDropdown 
-            displayName={session?.user?.displayName || session?.user?.name || undefined}
-            email={session?.user?.email || undefined}
-          />
+          <ProfileDropdown displayName={user?.displayName || user?.name || undefined} email={user?.email || undefined} />
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {error && (
           <motion.div
@@ -251,10 +331,8 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Stats */}
         {data && showKpiCards && <PodStats stats={data.podStats} />}
 
-        {/* Monthly Totals + Controls */}
         {data && (
           <MonthlyTotals
             totals={data.monthlyTotals}
@@ -275,7 +353,6 @@ export default function Dashboard() {
           />
         )}
 
-        {/* Charts */}
         {data && (
           <WeeklyTable
             data={filteredWeeklyData}
@@ -289,4 +366,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

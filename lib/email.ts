@@ -67,3 +67,52 @@ export async function sendInviteEmail(
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
+
+export async function sendLoginCodeEmail(toEmail: string, code: string) {
+  try {
+    const subject = "Your Pod 3 Dashboard login code";
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+            .content { background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px; }
+            .code { font-size: 32px; letter-spacing: 6px; font-weight: bold; color: #0f766e; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Pod 3 Dashboard</h1>
+            </div>
+            <div class="content">
+              <p>Use this one-time code to sign in:</p>
+              <div class="code">${code}</div>
+              <p>This code expires in 10 minutes.</p>
+              <p>If you did not request this code, you can ignore this email.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: toEmail,
+      subject,
+      html: htmlContent,
+      text: `Your Pod 3 Dashboard login code is ${code}. This code expires in 10 minutes.`,
+    });
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`Failed to send login code email to ${toEmail}:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}

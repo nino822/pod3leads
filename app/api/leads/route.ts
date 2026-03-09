@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import {
-  fetchSheetWithOAuth,
   fetchSheetWithServiceAccount,
 } from "@/lib/sheets";
+import { getSessionFromRequest } from "@/lib/custom-auth";
 import {
   parseSheetData,
   calculatePodStats,
@@ -19,11 +17,10 @@ export const revalidate = 600; // Cache for 10 minutes
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.accessToken) {
+    const user = await getSessionFromRequest(request);
+    if (!user) {
       return NextResponse.json(
-        { error: "Unauthorized. Please sign in with Google." },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -48,35 +45,12 @@ export async function GET(request: NextRequest) {
 
     for (const range of rangeCandidates) {
       try {
-        sheetData = await fetchSheetWithOAuth(session, range);
+        sheetData = await fetchSheetWithServiceAccount(range);
         selectedRange = range;
         break;
-      } catch (oauthError) {
-        lastError = oauthError;
-        console.log(`OAuth2 failed for range ${range}, trying next candidate...`);
-      }
-    }
-
-    if (!selectedRange) {
-      if (!process.env.GOOGLE_CLIENT_EMAIL) {
-        return NextResponse.json(
-          {
-            error: "Failed to fetch year data from Google Sheets",
-            details: String(lastError),
-          },
-          { status: 500 }
-        );
-      }
-
-      for (const range of rangeCandidates) {
-        try {
-          sheetData = await fetchSheetWithServiceAccount(range);
-          selectedRange = range;
-          break;
-        } catch (saError) {
-          lastError = saError;
-          console.log(`Service account failed for range ${range}, trying next candidate...`);
-        }
+      } catch (saError) {
+        lastError = saError;
+        console.log(`Service account failed for range ${range}, trying next candidate...`);
       }
     }
 
