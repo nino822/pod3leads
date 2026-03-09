@@ -33,28 +33,40 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
-      // Check if user is invited or already exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      });
-      
-      if (existingUser) return true;
-      
-      // Bootstrap guard: only allow first-user bypass outside production,
-      // unless explicitly enabled via env flag.
-      const userCount = await prisma.user.count();
-      if (userCount === 0) {
+      try {
+        // Check if user is invited or already exists
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+        });
+        
+        if (existingUser) return true;
+        
+        // Bootstrap guard: only allow first-user bypass outside production,
+        // unless explicitly enabled via env flag.
+        const userCount = await prisma.user.count();
+        if (userCount === 0) {
+          const allowBootstrap =
+            process.env.ALLOW_FIRST_USER_BOOTSTRAP === "true" || process.env.NODE_ENV !== "production";
+          if (allowBootstrap) return true;
+        }
+        
+        // Check if user is invited
+        const invite = await prisma.invite.findUnique({
+          where: { email },
+        });
+        
+        return !!invite; // Only allow if invited
+      } catch (error) {
+        // If database is unreachable and bootstrap is enabled, allow first login
         const allowBootstrap =
           process.env.ALLOW_FIRST_USER_BOOTSTRAP === "true" || process.env.NODE_ENV !== "production";
-        if (allowBootstrap) return true;
+        if (allowBootstrap) {
+          console.warn("Database error in signIn, but bootstrap allowed:", error);
+          return true;
+        }
+        console.error("Database error in signIn:", error);
+        return false;
       }
-      
-      // Check if user is invited
-      const invite = await prisma.invite.findUnique({
-        where: { email },
-      });
-      
-      return !!invite; // Only allow if invited
     },
     async jwt({ token, account, user }) {
       if (account) {
