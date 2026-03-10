@@ -114,6 +114,7 @@ export default function Dashboard() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -131,6 +132,14 @@ export default function Dashboard() {
       fetchLeads();
     }
   }, [status, filters.year]);
+
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setOtpCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpCooldown]);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -186,6 +195,11 @@ export default function Dashboard() {
   };
 
   const handleRequestCode = async () => {
+    if (otpCooldown > 0) {
+      setAuthError(`Please wait ${otpCooldown}s before requesting another code.`);
+      return;
+    }
+
     setAuthLoading(true);
     setAuthError(null);
     try {
@@ -196,12 +210,16 @@ export default function Dashboard() {
       });
       const result = await res.json();
       if (!res.ok) {
+        if (typeof result?.retryAfter === "number" && result.retryAfter > 0) {
+          setOtpCooldown(result.retryAfter);
+        }
         const errorMessage = result?.details
           ? `${result.error || "Failed to send code"}: ${result.details}`
           : result?.error || "Failed to send code";
         throw new Error(errorMessage);
       }
       setCodeSent(true);
+      setOtpCooldown(60);
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "Failed to send code");
     } finally {
@@ -357,7 +375,7 @@ export default function Dashboard() {
               {!codeSent ? (
                 <button
                   onClick={handleRequestCode}
-                  disabled={authLoading || !email}
+                  disabled={authLoading || !email || otpCooldown > 0}
                   className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                 >
                   {authLoading ? (
@@ -365,6 +383,8 @@ export default function Dashboard() {
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
                       Sending code...
                     </span>
+                  ) : otpCooldown > 0 ? (
+                    `Wait ${otpCooldown}s`
                   ) : (
                     "Send Login Code"
                   )}

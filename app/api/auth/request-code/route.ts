@@ -5,6 +5,11 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function getRetryAfterSeconds(message: string) {
+  const match = message.match(/after\s+(\d+)\s+second/i);
+  return match ? Number(match[1]) : null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -22,16 +27,23 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Supabase OTP send error:", error.message);
+      const retryAfter = getRetryAfterSeconds(error.message);
       const details =
         error.message.includes("Signups not allowed")
           ? "Supabase Auth setting is blocking OTP. Enable Email signups in Supabase Auth settings, then try again."
-          : error.message;
+          : retryAfter
+            ? `Too many OTP requests. Please wait ${retryAfter} seconds and try again.`
+            : error.message;
       return NextResponse.json(
         {
           error: "Failed to send OTP code",
           details,
+          retryAfter,
         },
-        { status: 400 }
+        {
+          status: retryAfter ? 429 : 400,
+          headers: retryAfter ? { "Retry-After": String(retryAfter) } : undefined,
+        }
       );
     }
 
