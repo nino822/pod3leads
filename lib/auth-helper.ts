@@ -7,6 +7,7 @@ export interface AuthUser {
   name?: string | null;
   displayName?: string | null;
   role?: "ADMIN" | "MEMBER";
+  image?: string | null;
 }
 
 export async function getAuthUser(request: NextRequest): Promise<AuthUser | null> {
