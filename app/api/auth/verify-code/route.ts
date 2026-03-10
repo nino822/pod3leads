@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateLoginCode, createUserSession, setSessionCookie } from "@/lib/custom-auth";
+import { createUserSession, setSessionCookie } from "@/lib/custom-auth";
+import { getSupabaseServer } from "@/lib/supabase-server";
 import { prisma } from "@/lib/prisma";
 
 function isValidEmail(email: string) {
@@ -16,14 +17,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and code are required" }, { status: 400 });
     }
 
-    const validation = await validateLoginCode(email, code);
+    const supabase = getSupabaseServer();
+    const { error: otpError } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "email",
+    });
 
-    if (!validation.ok) {
-      const msg =
-        validation.reason === "Too many attempts"
-          ? "Too many attempts. Please request a new code."
-          : "Invalid or expired code";
-      return NextResponse.json({ error: msg }, { status: 401 });
+    if (otpError) {
+      return NextResponse.json({ error: "Invalid or expired code" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
