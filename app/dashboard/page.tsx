@@ -244,10 +244,14 @@ export default function Dashboard() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors">
+        <div className="absolute top-4 right-4 z-20">
+          <ThemeToggle />
+        </div>
+
         {/* Background decorative elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/15 dark:bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/15 dark:bg-cyan-500/10 rounded-full blur-3xl"></div>
 
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -256,7 +260,7 @@ export default function Dashboard() {
           className="relative w-full max-w-md"
         >
           {/* Card with glassmorphism effect */}
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
+          <div className="bg-white/85 dark:bg-white/10 backdrop-blur-xl border border-slate-200 dark:border-white/20 rounded-2xl p-8 shadow-2xl">
             {/* Logo/Title */}
             <div className="mb-8">
               <motion.div
@@ -269,10 +273,10 @@ export default function Dashboard() {
                     <span className="text-white font-bold text-xl">P3</span>
                   </div>
                 </div>
-                <h1 className="text-3xl font-bold text-white text-center mb-2">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white text-center mb-2">
                   Pod 3 Dashboard
                 </h1>
-                <p className="text-slate-300 text-center text-sm">
+                <p className="text-slate-600 dark:text-slate-300 text-center text-sm">
                   Access your leads and team metrics
                 </p>
               </motion.div>
@@ -287,7 +291,7 @@ export default function Dashboard() {
             >
               {/* Email Input */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                   Email Address
                 </label>
                 <input
@@ -298,7 +302,7 @@ export default function Dashboard() {
                     if (e.key === "Enter" && !codeSent) handleRequestCode();
                   }}
                   placeholder="you@company.com"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
+                  className="w-full px-4 py-3 bg-white dark:bg-white/10 border border-slate-300 dark:border-white/20 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
                 />
               </div>
 
@@ -310,7 +314,7 @@ export default function Dashboard() {
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-2"
                 >
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                     Verification Code
                   </label>
                   <input
@@ -323,9 +327,9 @@ export default function Dashboard() {
                     placeholder="000000"
                     maxLength={6}
                     inputMode="numeric"
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition text-center text-2xl tracking-widest font-mono"
+                    className="w-full px-4 py-3 bg-white dark:bg-white/10 border border-slate-300 dark:border-white/20 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition text-center text-2xl tracking-widest font-mono"
                   />
-                  <p className="text-xs text-slate-400 text-center">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
                     Code sent to your email. Expires in 10 minutes.
                   </p>
                 </motion.div>
@@ -389,7 +393,7 @@ export default function Dashboard() {
                       setAuthError(null);
                     }}
                     disabled={authLoading}
-                    className="w-full text-slate-300 hover:text-white text-sm font-medium py-2 transition"
+                    className="w-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm font-medium py-2 transition"
                   >
                     Use different email
                   </button>
@@ -402,9 +406,9 @@ export default function Dashboard() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="mt-8 pt-6 border-t border-white/10 text-center"
+              className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10 text-center"
             >
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Secure passwordless login · Code sent to your email
               </p>
             </motion.div>
@@ -416,7 +420,7 @@ export default function Dashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="text-slate-400 text-sm mt-8"
+          className="text-slate-500 dark:text-slate-400 text-sm mt-8"
         >
           Pod 3 • Performance Analytics
         </motion.p>

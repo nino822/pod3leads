@@ -45,7 +45,8 @@ GOOGLE_CLIENT_SECRET=
 GOOGLE_SHEET_ID=
 NEXTAUTH_SECRET=
 NEXTAUTH_URL=http://localhost:3000
-DATABASE_URL=file:./dev.db
+DATABASE_URL=postgresql://USER:PASSWORD@POOLER_HOST:6543/postgres?sslmode=require&pgbouncer=true&connection_limit=1
+DIRECT_URL=postgresql://USER:PASSWORD@DB_HOST:5432/postgres?sslmode=require
 
 # Optional Sheets service-account fallback
 GOOGLE_CLIENT_EMAIL=
@@ -62,6 +63,12 @@ EMAIL_FROM_EMAIL=
 # Optional: disable in production by default
 ALLOW_FIRST_USER_BOOTSTRAP=false
 ```
+
+PostgreSQL note:
+
+- Set `DATABASE_URL` to a pooled/session connection string (PgBouncer) for runtime.
+- Set `DIRECT_URL` to the direct database connection for Prisma migrations.
+- Include `pgbouncer=true` in pooled URLs to avoid prepared statement collisions.
 
 ### Run
 
