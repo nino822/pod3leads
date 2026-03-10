@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helper";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { hashPassword } from "@/lib/custom-auth";
 
 async function syncInviteToSupabaseAuth(email: string, role: "ADMIN" | "MEMBER", inviteUrl: string) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -84,10 +85,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { email, name, role } = await request.json();
+    const { email, name, role, password } = await request.json();
     const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
     const normalizedName = typeof name === "string" ? name.trim() : "";
     const normalizedRole: "ADMIN" | "MEMBER" = role === "ADMIN" ? "ADMIN" : "MEMBER";
+    const normalizedPassword = typeof password === "string" ? password : "";
 
     if (!normalizedEmail || !normalizedName) {
       return NextResponse.json(
@@ -100,6 +102,13 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalizedEmail)) {
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+    }
+
+    if (normalizedPassword && normalizedPassword.length < 8) {
+      return NextResponse.json(
+        { error: "Temporary password must be at least 8 characters" },
+        { status: 400 }
+      );
     }
 
     const existingInvite = await prisma.invite.findUnique({ where: { email: normalizedEmail } });
@@ -121,6 +130,21 @@ export async function POST(request: NextRequest) {
             invitedBy: user.id,
           } as any,
         });
+
+    await prisma.user.upsert({
+      where: { email: normalizedEmail },
+      update: {
+        name: normalizedName,
+        role: normalizedRole,
+        ...(normalizedPassword ? { passwordHash: hashPassword(normalizedPassword) } : {}),
+      } as any,
+      create: {
+        email: normalizedEmail,
+        name: normalizedName,
+        role: normalizedRole,
+        ...(normalizedPassword ? { passwordHash: hashPassword(normalizedPassword) } : {}),
+      } as any,
+    });
 
     const configuredBaseUrl =
       process.env.NEXTAUTH_URL ||

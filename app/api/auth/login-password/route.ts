@@ -18,6 +18,13 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({ where: { email } });
 
+    if (user && user.email && !user.passwordHash) {
+      return NextResponse.json(
+        { error: "No password is set for this account yet. Ask an admin to assign a temporary password or use OTP." },
+        { status: 400 }
+      );
+    }
+
     if (!user || !user.email || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }

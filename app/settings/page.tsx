@@ -23,6 +23,7 @@ export default function Settings() {
   const [newInviteEmail, setNewInviteEmail] = useState("");
   const [newInviteName, setNewInviteName] = useState("");
   const [newInviteRole, setNewInviteRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
+  const [newInvitePassword, setNewInvitePassword] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
   const [error, setError] = useState("");
@@ -129,6 +130,7 @@ export default function Settings() {
           email: newInviteEmail.trim(),
           name: newInviteName.trim(),
           role: newInviteRole,
+          password: newInvitePassword,
         }),
       });
 
@@ -158,6 +160,7 @@ export default function Settings() {
       setNewInviteEmail("");
       setNewInviteName("");
       setNewInviteRole("MEMBER");
+      setNewInvitePassword("");
       fetchInvites();
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -285,7 +288,7 @@ export default function Settings() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 border border-transparent dark:border-slate-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Invite Users</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <input
               type="email"
               value={newInviteEmail}
@@ -308,14 +311,22 @@ export default function Settings() {
               <option value="MEMBER">Member</option>
               <option value="ADMIN">Admin</option>
             </select>
+            <input
+              type="password"
+              value={newInvitePassword}
+              onChange={(e) => setNewInvitePassword(e.target.value)}
+              placeholder="Temporary password (optional)"
+              className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+            />
             <button
               onClick={handleAddInvite}
               disabled={isInviting}
-              className="md:col-span-3 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
+              className="md:col-span-4 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
             >
               {isInviting ? "Adding..." : "Add Invite"}
             </button>
           </div>
+          <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">Set a temporary password if you want password fallback to work immediately without OTP.</p>
 
           {invites.length > 0 ? (
             <div className="space-y-2">
