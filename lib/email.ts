@@ -1,4 +1,23 @@
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+function getResendConfig() {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim() || "onboarding@resend.dev";
+
+  if (!apiKey) {
+    return {
+      ok: false as const,
+      error: "Resend is not configured. Set RESEND_API_KEY in your environment.",
+    };
+  }
+
+  return {
+    ok: true as const,
+    apiKey,
+    fromEmail,
+  };
+}
 
 function getMailerConfig() {
   const user = process.env.GMAIL_USER?.trim();
@@ -35,15 +54,49 @@ function getFromHeader(defaultEmail: string) {
   return `${senderName} <${senderEmail}>`;
 }
 
+function getResendFrom(defaultEmail: string) {
+  const senderName = process.env.EMAIL_FROM_NAME?.trim() || "Pod 3 Dashboard";
+  return `${senderName} <${defaultEmail}>`;
+}
+
 async function sendEmail(options: {
   to: string;
   subject: string;
   html: string;
   text: string;
 }) {
+  const resendConfig = getResendConfig();
+  if (resendConfig.ok) {
+    try {
+      const resend = new Resend(resendConfig.apiKey);
+      const result = await resend.emails.send({
+        from: getResendFrom(resendConfig.fromEmail),
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      });
+
+      if (result.error) {
+        return { success: false as const, error: result.error.message };
+      }
+
+      return { success: true as const, messageId: result.data?.id || "resend" };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
   const config = getMailerConfig();
   if (!config.ok) {
-    return { success: false as const, error: config.error };
+    return {
+      success: false as const,
+      error:
+        "Email is not configured. Set RESEND_API_KEY + RESEND_FROM_EMAIL, or GMAIL_USER + GMAIL_APP_PASSWORD.",
+    };
   }
 
   const transporter = nodemailer.createTransport({

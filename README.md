@@ -10,7 +10,7 @@ Dashboard for tracking Pod 3 client leads from Google Sheets with Google OAuth, 
 - Tailwind CSS + Framer Motion
 - Recharts
 - Google Sheets API
-- Nodemailer (invite emails)
+- Resend API (primary emails) + Nodemailer Gmail fallback
 
 ## Features
 
@@ -52,7 +52,12 @@ DIRECT_URL=postgresql://USER:PASSWORD@DB_HOST:5432/postgres?sslmode=require
 GOOGLE_CLIENT_EMAIL=
 GOOGLE_PRIVATE_KEY=
 
-# Required for invite email sending
+# Preferred email provider
+RESEND_API_KEY=
+# Optional (defaults to onboarding@resend.dev)
+RESEND_FROM_EMAIL=
+
+# Optional Gmail fallback provider
 GMAIL_USER=
 GMAIL_APP_PASSWORD=
 
@@ -88,8 +93,10 @@ Set these environment variables in Vercel:
 - `NEXTAUTH_SECRET`
 - `NEXTAUTH_URL` (your production URL)
 - `DATABASE_URL` (hosted DB for production)
-- `GMAIL_USER` (if using invite emails)
-- `GMAIL_APP_PASSWORD` (if using invite emails)
+- `RESEND_API_KEY` (recommended)
+- `RESEND_FROM_EMAIL` (recommended)
+- `GMAIL_USER` (optional fallback)
+- `GMAIL_APP_PASSWORD` (optional fallback)
 - `GOOGLE_CLIENT_EMAIL` / `GOOGLE_PRIVATE_KEY` (optional fallback)
 - `ALLOW_FIRST_USER_BOOTSTRAP=false` (recommended)
 
