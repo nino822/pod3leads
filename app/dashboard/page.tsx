@@ -113,8 +113,10 @@ export default function Dashboard() {
 
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
+  const [usePasswordLogin, setUsePasswordLogin] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -249,6 +251,28 @@ export default function Dashboard() {
     }
   };
 
+  const handlePasswordLogin = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const res = await fetch("/api/auth/login-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result?.error || "Failed to sign in with password");
+      }
+      await refresh();
+      setPassword("");
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "Failed to sign in with password");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -356,6 +380,28 @@ export default function Dashboard() {
                 </motion.div>
               )}
 
+              {usePasswordLogin && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="space-y-2"
+                >
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && password.length >= 8) handlePasswordLogin();
+                    }}
+                    placeholder="Enter your password"
+                    className="w-full px-4 py-3 bg-white dark:bg-white/10 border border-slate-300 dark:border-white/20 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
+                  />
+                </motion.div>
+              )}
+
               {/* Error Message */}
               {authError && (
                 <motion.div
@@ -372,7 +418,7 @@ export default function Dashboard() {
               )}
 
               {/* Primary Action Button */}
-              {!codeSent ? (
+              {!codeSent && !usePasswordLogin ? (
                 <button
                   onClick={handleRequestCode}
                   disabled={authLoading || !email || otpCooldown > 0}
@@ -389,6 +435,38 @@ export default function Dashboard() {
                     "Send Login Code"
                   )}
                 </button>
+              ) : usePasswordLogin ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-2"
+                >
+                  <button
+                    onClick={handlePasswordLogin}
+                    disabled={authLoading || !email || password.length < 8}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {authLoading ? (
+                      <span className="flex items-center justify-center">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                        Signing in...
+                      </span>
+                    ) : (
+                      "Sign In with Password"
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUsePasswordLogin(false);
+                      setPassword("");
+                      setAuthError(null);
+                    }}
+                    disabled={authLoading}
+                    className="w-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm font-medium py-2 transition"
+                  >
+                    Use email code instead
+                  </button>
+                </motion.div>
               ) : (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -421,6 +499,19 @@ export default function Dashboard() {
                     Use different email
                   </button>
                 </motion.div>
+              )}
+
+              {!codeSent && !usePasswordLogin && (
+                <button
+                  onClick={() => {
+                    setUsePasswordLogin(true);
+                    setAuthError(null);
+                  }}
+                  disabled={authLoading}
+                  className="w-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm font-medium py-2 transition"
+                >
+                  Use password instead
+                </button>
               )}
             </motion.div>
 
