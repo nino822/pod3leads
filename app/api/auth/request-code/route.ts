@@ -21,10 +21,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      // Don't expose whether email exists — return generic message
+      console.error("Supabase OTP send error:", error.message);
       return NextResponse.json(
-        { error: "If this email is authorized, a code has been sent." },
-        { status: 200 }
+        {
+          error: "Failed to send OTP code",
+          details: error.message,
+        },
+        { status: 400 }
       );
     }
 
