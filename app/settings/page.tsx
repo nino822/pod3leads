@@ -35,6 +35,7 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordStatus, setPasswordStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
 
   useEffect(() => {
@@ -182,6 +183,15 @@ export default function Settings() {
     } finally {
       setPasswordLoading(false);
     }
+  };
+
+  const togglePasswordForm = () => {
+    if (showPasswordForm) {
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordStatus(null);
+    }
+    setShowPasswordForm((prev) => !prev);
   };
 
   const handleAddInvite = async () => {
@@ -531,45 +541,60 @@ export default function Settings() {
           transition={{ delay: 0.2 }}
           className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 border border-transparent dark:border-slate-700"
         >
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">Change password</h2>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
-            Update the password you use for the fallback login method.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password"
-              className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-            />
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm password"
-              className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-            />
-          </div>
-          <div className="flex justify-end mt-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100">Change password</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400">
+                Update the password you use for the fallback login method.
+              </p>
+            </div>
             <button
-              onClick={handlePasswordUpdate}
-              disabled={passwordLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
+              onClick={togglePasswordForm}
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition"
             >
-              {passwordLoading ? "Updating..." : "Update password"}
+              {showPasswordForm ? "Cancel" : "Show change password"}
             </button>
           </div>
-          {passwordStatus && (
-            <div
-              className={`mt-4 px-3 py-2 rounded-lg text-sm ${
-                passwordStatus.type === "success"
-                  ? "bg-green-50 text-green-800 dark:bg-green-900/40 dark:text-green-200"
-                  : "bg-red-50 text-red-800 dark:bg-red-900/40 dark:text-red-200"
-              }`}
-            >
-              {passwordStatus.text}
-            </div>
+
+          {showPasswordForm && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password"
+                  className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm password"
+                  className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                />
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handlePasswordUpdate}
+                  disabled={passwordLoading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
+                >
+                  {passwordLoading ? "Updating..." : "Update password"}
+                </button>
+              </div>
+              {passwordStatus && (
+                <div
+                  className={`mt-4 px-3 py-2 rounded-lg text-sm ${
+                    passwordStatus.type === "success"
+                      ? "bg-green-50 text-green-800 dark:bg-green-900/40 dark:text-green-200"
+                      : "bg-red-50 text-red-800 dark:bg-red-900/40 dark:text-red-200"
+                  }`}
+                >
+                  {passwordStatus.text}
+                </div>
+              )}
+            </>
           )}
         </motion.div>
       </main>
