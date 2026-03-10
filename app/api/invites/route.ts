@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
           emailSent: false,
           inviteUrl,
           warning:
-            "Invite was created, but email delivery is not configured. Share the invite link manually.",
+            "Invite was created, but email delivery failed. Share the invite link manually.",
           details: emailResult.error || "Unknown email delivery error",
         },
         { status: 201 }

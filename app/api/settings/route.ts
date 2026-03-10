@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth-helper";
-import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   const user = await getAuthUser(request);
@@ -19,32 +19,45 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getAuthUser(request);
+  try {
+    const user = await getAuthUser(request);
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const { displayName } = await request.json();
+    const { displayName } = await request.json();
+    const normalizedDisplayName = typeof displayName === "string" ? displayName.trim() : "";
 
-  if (!displayName || typeof displayName !== "string") {
+    if (!normalizedDisplayName) {
+      return NextResponse.json(
+        { error: "Display name is required" },
+        { status: 400 }
+      );
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { displayName: normalizedDisplayName },
+      select: {
+        displayName: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    return NextResponse.json({
+      user: {
+        displayName: updated.displayName,
+        name: updated.name,
+        email: updated.email,
+      },
+    });
+  } catch (error) {
+    console.error("Settings POST error:", error);
     return NextResponse.json(
-      { error: "Display name is required" },
-      { status: 400 }
+      { error: "Failed to update display name" },
+      { status: 500 }
     );
   }
-
-  // Store displayName in Supabase user_metadata
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.auth.admin.updateUserById(user.id, {
-    user_metadata: { display_name: displayName },
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    user: { displayName, name: user.name, email: user.email },
-  });
 }

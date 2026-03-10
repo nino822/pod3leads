@@ -80,8 +80,11 @@ export default function Settings() {
         body: JSON.stringify({ displayName: displayName.trim() }),
       });
 
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+
       if (!res.ok) {
-        throw new Error("Failed to update display name");
+        throw new Error(data?.error || "Failed to update display name");
       }
 
       await refresh();
@@ -135,12 +138,12 @@ export default function Settings() {
         setSuccess(`${warning}${details}`);
       } else {
         setSuccess("Invite sent successfully!");
+        setTimeout(() => setSuccess(""), 3000);
       }
 
       setNewInviteEmail("");
       setNewInviteName("");
       fetchInvites();
-      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       if (err instanceof SyntaxError) {
         setError("Invite request failed with an invalid server response.");
