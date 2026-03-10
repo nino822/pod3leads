@@ -222,18 +222,25 @@ export async function getSessionFromRequest(request: NextRequest): Promise<AuthU
       tokenHash,
       expiresAt: { gt: new Date() },
     },
-    include: { user: true },
   });
 
-  if (!authSession || !authSession.user.email) {
+  if (!authSession) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: authSession.userId } });
+
+  if (!user || !user.email) {
+    // Clean up orphaned/invalid sessions to avoid repeated lookup failures.
+    await prisma.authSession.deleteMany({ where: { id: authSession.id } });
     return null;
   }
 
   return {
-    id: authSession.user.id,
-    email: authSession.user.email,
-    name: authSession.user.name,
-    displayName: authSession.user.displayName,
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    displayName: user.displayName,
   };
 }
 
