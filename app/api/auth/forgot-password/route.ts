@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { createPasswordResetCode } from "@/lib/custom-auth";
+import { sendPasswordResetEmail } from "@/lib/email";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,20 +12,16 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const supabase = getSupabaseAdmin();
-
-    // Use Supabase to send password reset email
-    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://pod3leads.vercel.app"}/auth/callback?type=recovery`,
-    });
-
-    if (error) {
-      console.error("Supabase reset password error:", error);
-    }
 
     // Always return success for security (don't reveal if email exists)
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (user) {
+      const code = await createPasswordResetCode(user.id);
+      await sendPasswordResetEmail(normalizedEmail, code);
+    }
+
     return NextResponse.json(
-      { ok: true, message: "If an account exists with this email, a reset link has been sent" },
+      { ok: true, message: "If an account exists with this email, a reset code has been sent" },
       { status: 200 }
     );
   } catch (error) {

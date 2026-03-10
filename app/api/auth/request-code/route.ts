@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { createLoginCode } from "@/lib/custom-auth";
+import { sendLoginCodeEmail } from "@/lib/email";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -14,20 +15,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
     }
 
-    const supabase = getSupabaseAdmin();
+    const code = await createLoginCode(email);
+    const result = await sendLoginCodeEmail(email, code);
 
-    // Send OTP via Supabase Auth
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-      },
-    });
-
-    if (error) {
-      console.error("Supabase OTP error:", error);
+    if (!result.success) {
+      console.error("Failed to send login code email:", result.error);
       return NextResponse.json(
-        { error: error.message || "Failed to send verification code" },
+        { error: result.error || "Failed to send verification code" },
         { status: 500 }
       );
     }

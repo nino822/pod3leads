@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSessionFromRequest } from "@/lib/custom-auth";
+import { hashPassword } from "@/lib/custom-auth";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get("sb-access-token")?.value;
-    const refreshToken = request.cookies.get("sb-refresh-token")?.value;
-
-    if (!accessToken) {
+    const user = await getSessionFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -20,24 +20,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
-    // Set session from cookies
-    if (refreshToken) {
-      await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-    }
-
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hashPassword(newPassword) },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
