@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   fetchSheetWithServiceAccount,
+  fetchSheetPublic,
 } from "@/lib/sheets";
 import { getAuthUser } from "@/lib/auth-helper";
 import {
@@ -50,7 +51,16 @@ export async function GET(request: NextRequest) {
         break;
       } catch (saError) {
         lastError = saError;
-        console.log(`Service account failed for range ${range}, trying next candidate...`);
+
+        try {
+          sheetData = await fetchSheetPublic(range);
+          selectedRange = range;
+          console.log(`Using public Google Sheet fallback for range: ${range}`);
+          break;
+        } catch (publicError) {
+          lastError = publicError;
+          console.log(`Service account/public fetch failed for range ${range}, trying next candidate...`);
+        }
       }
     }
 

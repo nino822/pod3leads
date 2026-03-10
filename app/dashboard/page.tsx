@@ -145,7 +145,8 @@ export default function Dashboard() {
 
       if (!res.ok) {
         const failed = await res.json().catch(() => ({ error: "Failed to fetch data" }));
-        throw new Error(failed.error || "Failed to fetch data");
+        const message = [failed.error, failed.details].filter(Boolean).join(": ");
+        throw new Error(message || "Failed to fetch data");
       }
 
       const result = await res.json();
