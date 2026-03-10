@@ -35,7 +35,7 @@ export default function Settings() {
   useEffect(() => {
     if (user) {
       fetchSettings();
-      fetchInvites();
+      // fetchInvites(); // hidden for now
     }
   }, [user]);
 
@@ -224,7 +224,7 @@ export default function Settings() {
           </motion.div>
         )}
 
-        {inviteLink && (
+        {false && inviteLink && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -266,7 +266,7 @@ export default function Settings() {
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 border border-transparent dark:border-slate-700">
+        {false && <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 border border-transparent dark:border-slate-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Invite Users</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -311,7 +311,7 @@ export default function Settings() {
           ) : (
             <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">No invites yet</p>
           )}
-        </motion.div>
+        </motion.div>}
       </main>
     </div>
   );
