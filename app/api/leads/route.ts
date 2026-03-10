@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   fetchSheetWithServiceAccount,
 } from "@/lib/sheets";
-import { getSessionFromRequest } from "@/lib/custom-auth";
+import { getAuthUser } from "@/lib/auth-helper";
 import {
   parseSheetData,
   calculatePodStats,
@@ -17,7 +17,7 @@ export const revalidate = 600; // Cache for 10 minutes
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getSessionFromRequest(request);
+    const user = await getAuthUser(request);
     if (!user) {
       return NextResponse.json(
         { error: "Unauthorized" },

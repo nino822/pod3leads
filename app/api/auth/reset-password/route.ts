@@ -1,24 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { validatePasswordResetCode, hashPassword } from "@/lib/custom-auth";
-import { getSessionFromRequest } from "@/lib/custom-auth";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
   try {
-    const { code, password } = await request.json();
-
-    // Get user from session
-    const user = await getSessionFromRequest(request);
-    if (!user) {
-      return NextResponse.json(
-        { ok: false, error: "You must be signed in to reset your password" },
-        { status: 401 }
-      );
-    }
-
-    if (!code || typeof code !== "string") {
-      return NextResponse.json({ ok: false, error: "Reset code is required" }, { status: 400 });
-    }
+    const { password } = await request.json();
 
     if (!password || typeof password !== "string" || password.length < 8) {
       return NextResponse.json(
@@ -27,23 +12,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate reset code
-    const validation = await validatePasswordResetCode(user.id, code.trim());
-    if (!validation.ok) {
+    const accessToken = request.cookies.get("sb-access-token")?.value;
+    const refreshToken = request.cookies.get("sb-refresh-token")?.value;
+
+    if (!accessToken) {
       return NextResponse.json(
-        { ok: false, error: validation.reason },
-        { status: 400 }
+        { ok: false, error: "You must be signed in to reset your password" },
+        { status: 401 }
       );
     }
 
-    // Hash new password
-    const passwordHash = hashPassword(password);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
-    // Update user password
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash },
-    });
+    // Set session from cookies
+    if (refreshToken) {
+      await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+    }
+
+    // Update password via Supabase
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(
       { ok: true, message: "Password updated successfully" },

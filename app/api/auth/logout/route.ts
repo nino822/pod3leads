@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteSessionFromRequest, clearSessionCookie } from "@/lib/custom-auth";
 
 export async function POST(request: NextRequest) {
   try {
-    await deleteSessionFromRequest(request);
     const response = NextResponse.json({ success: true });
-    clearSessionCookie(response);
+
+    // Clear Supabase auth cookies
+    response.cookies.set("sb-access-token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+
+    response.cookies.set("sb-refresh-token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+
     return response;
   } catch (error) {
     console.error("logout error:", error);

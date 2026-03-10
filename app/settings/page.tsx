@@ -19,8 +19,6 @@ export default function Settings() {
   const [invites, setInvites] = useState<Invite[]>([]);
   const [newInviteEmail, setNewInviteEmail] = useState("");
   const [newInviteName, setNewInviteName] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -88,42 +86,6 @@ export default function Settings() {
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSavePassword = async () => {
-    if (!newPassword.trim()) {
-      setError("New password is required");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const res = await fetch("/api/auth/password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
-      });
-
-      const result = await res.json();
-      if (!res.ok) {
-        throw new Error(result.error || "Failed to update password");
-      }
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setSuccess("Password updated successfully!");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update password");
     } finally {
       setLoading(false);
     }
@@ -201,7 +163,7 @@ export default function Settings() {
         <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="text-sm text-gray-600 mt-1">Manage your profile, password, and invites</p>
+            <p className="text-sm text-gray-600 mt-1">Manage your profile and invites</p>
           </div>
           <button
             onClick={() => router.push("/dashboard")}
@@ -245,34 +207,6 @@ export default function Settings() {
             />
             <button onClick={handleSaveName} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50">
               {loading ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Password</h2>
-          <p className="text-sm text-gray-600 mb-4">Set or change your login password. Email code is still required to complete sign-in.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Current password (if already set)"
-              className="px-4 py-2 border border-gray-300 rounded-lg"
-            />
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password (min 8 chars)"
-              className="px-4 py-2 border border-gray-300 rounded-lg"
-            />
-            <button
-              onClick={handleSavePassword}
-              disabled={loading}
-              className="md:col-span-2 bg-slate-800 hover:bg-slate-900 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
-            >
-              {loading ? "Updating..." : "Update Password"}
             </button>
           </div>
         </motion.div>

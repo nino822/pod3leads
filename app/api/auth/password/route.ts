@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest, hashPassword, verifyPassword } from "@/lib/custom-auth";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionUser = await getSessionFromRequest(request);
-    if (!sessionUser?.email) {
+    const accessToken = request.cookies.get("sb-access-token")?.value;
+    const refreshToken = request.cookies.get("sb-refresh-token")?.value;
+
+    if (!accessToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
     const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
 
     if (!newPassword || newPassword.length < 8) {
@@ -20,21 +20,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await prisma.user.findUnique({ where: { email: sessionUser.email } });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // Set session from cookies
+    if (refreshToken) {
+      await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
     }
 
-    if (user.passwordHash) {
-      if (!currentPassword || !verifyPassword(currentPassword, user.passwordHash)) {
-        return NextResponse.json({ error: "Current password is invalid" }, { status: 401 });
-      }
-    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: hashPassword(newPassword) },
-    });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -111,7 +111,6 @@ export default function Dashboard() {
   });
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
@@ -191,7 +190,7 @@ export default function Dashboard() {
       const res = await fetch("/api/auth/request-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
       const result = await res.json();
       if (!res.ok) {
@@ -222,28 +221,6 @@ export default function Dashboard() {
       setCode("");
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "Failed to verify code");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    const forgotEmail = email || "";
-    if (!forgotEmail) {
-      setAuthError("Please enter your email first");
-      return;
-    }
-    setAuthLoading(true);
-    try {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail }),
-      });
-      const result = await res.json();
-      setAuthError(result.message || "Check your email for password reset code");
-    } catch (err) {
-      setAuthError(err instanceof Error ? err.message : "Failed to send reset code");
     } finally {
       setAuthLoading(false);
     }
@@ -319,23 +296,6 @@ export default function Dashboard() {
                     if (e.key === "Enter" && !codeSent) handleRequestCode();
                   }}
                   placeholder="you@company.com"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
-                />
-              </div>
-
-              {/* Password Input */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200">
-                  Password <span className="text-slate-400 text-xs font-normal">(optional)</span>
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !codeSent) handleRequestCode();
-                  }}
-                  placeholder="Leave empty if you haven't set one"
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
                 />
               </div>
@@ -429,25 +389,7 @@ export default function Dashboard() {
                     disabled={authLoading}
                     className="w-full text-slate-300 hover:text-white text-sm font-medium py-2 transition"
                   >
-                    Use different credentials
-                  </button>
-                </motion.div>
-              )}
-
-              {/* Forgot Password Link */}
-              {!codeSent && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="pt-2 text-center"
-                >
-                  <button
-                    onClick={handleForgotPassword}
-                    disabled={authLoading || !email}
-                    className="text-sm text-cyan-300 hover:text-cyan-200 font-medium disabled:text-slate-500 transition"
-                  >
-                    Forgot your password?
+                    Use different email
                   </button>
                 </motion.div>
               )}
@@ -461,7 +403,7 @@ export default function Dashboard() {
               className="mt-8 pt-6 border-t border-white/10 text-center"
             >
               <p className="text-xs text-slate-400">
-                Secure login with encrypted codes · No social account required
+                Secure passwordless login · Code sent to your email
               </p>
             </motion.div>
           </div>

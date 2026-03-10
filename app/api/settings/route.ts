@@ -1,30 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/custom-auth";
+import { getAuthUser } from "@/lib/auth-helper";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
+  const user = await getAuthUser(request);
 
-  if (!session?.email) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.email },
-    select: {
-      displayName: true,
-      name: true,
-      email: true,
+  return NextResponse.json({
+    user: {
+      displayName: user.displayName || null,
+      name: user.name || null,
+      email: user.email,
     },
   });
-
-  return NextResponse.json({ user });
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
+  const user = await getAuthUser(request);
 
-  if (!session?.email) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -37,10 +34,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const user = await prisma.user.update({
-    where: { email: session.email },
-    data: { displayName },
+  // Store displayName in Supabase user_metadata
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.auth.admin.updateUserById(user.id, {
+    user_metadata: { display_name: displayName },
   });
 
-  return NextResponse.json({ user });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    user: { displayName, name: user.name, email: user.email },
+  });
 }

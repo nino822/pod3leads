@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendInviteEmail } from "@/lib/email";
-import { getSessionFromRequest } from "@/lib/custom-auth";
+import { getAuthUser } from "@/lib/auth-helper";
 
 export async function GET(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
-
-  if (!session?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.email },
-  });
+  const user = await getAuthUser(request);
 
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const invites = await prisma.invite.findMany({
@@ -27,9 +19,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
+  const user = await getAuthUser(request);
 
-  if (!session?.email) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -48,26 +40,6 @@ export async function POST(request: NextRequest) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(normalizedEmail)) {
     return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.email },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  // Check if email is already invited or already a user
-  const existingUser = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  });
-
-  if (existingUser) {
-    return NextResponse.json(
-      { error: "User already has access" },
-      { status: 400 }
-    );
   }
 
   const existingInvite = await prisma.invite.findUnique({
@@ -94,7 +66,6 @@ export async function POST(request: NextRequest) {
   const emailResult = await sendInviteEmail(normalizedEmail, normalizedName, inviterName);
 
   if (!emailResult.success) {
-    // Keep invite records accurate: if delivery fails, remove the just-created invite.
     await prisma.invite.delete({
       where: { id: invite.id },
     });
@@ -112,9 +83,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
+  const user = await getAuthUser(request);
 
-  if (!session?.email) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -126,14 +97,6 @@ export async function DELETE(request: NextRequest) {
       { error: "Invite ID is required" },
       { status: 400 }
     );
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.email },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   // Only allow deletion of invites created by this user
