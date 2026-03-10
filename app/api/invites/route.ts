@@ -62,21 +62,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Keep Auth in sync immediately so invited users can request OTP right away,
-    // even if DB webhook configuration is incomplete.
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { error } = await supabaseAdmin.auth.admin.createUser({
-        email: normalizedEmail,
-        email_confirm: true,
-      });
-      if (error && !error.message.toLowerCase().includes("already")) {
-        console.error("Failed to add invited user to Supabase Auth:", error.message);
-      }
-    } catch (syncError) {
-      console.error("Invite auth sync error:", syncError);
-    }
-
     const configuredBaseUrl =
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
@@ -88,9 +73,45 @@ export async function POST(request: NextRequest) {
     }
     const inviteUrl = `${inviteBaseUrl}/dashboard`;
 
-    // Invite record created. Supabase DB webhook will add the user to Supabase Auth
-    // so they can receive OTP codes. Share the login URL with them manually.
-    return NextResponse.json({ invite, inviteUrl }, { status: 201 });
+    const supabaseAdmin = getSupabaseAdmin();
+    let emailSent = false;
+    let warning: string | null = null;
+
+    // Primary path: send a Supabase invite email and create auth user if needed.
+    const { error: inviteEmailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      normalizedEmail,
+      { redirectTo: inviteUrl }
+    );
+
+    if (!inviteEmailError) {
+      emailSent = true;
+    } else {
+      const msg = inviteEmailError.message.toLowerCase();
+
+      // Fallback: if email couldn't be sent, ensure auth user still exists for OTP login.
+      const { error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        email_confirm: true,
+      });
+
+      const isAlreadyRegistered =
+        msg.includes("already") ||
+        msg.includes("registered") ||
+        msg.includes("exists");
+      const createFailed = createUserError && !createUserError.message.toLowerCase().includes("already");
+
+      if (!isAlreadyRegistered) {
+        console.error("Supabase invite email error:", inviteEmailError.message);
+      }
+      if (createFailed) {
+        console.error("Supabase create user fallback error:", createUserError.message);
+      }
+
+      warning =
+        "Invite created. If no invite email arrives, the user can still request OTP login directly.";
+    }
+
+    return NextResponse.json({ invite, inviteUrl, emailSent, warning }, { status: 201 });
   } catch (error) {
     console.error("Invite POST error:", error);
     return NextResponse.json(
