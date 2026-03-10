@@ -7,9 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 interface ProfileDropdownProps {
   displayName?: string;
   email?: string;
+  image?: string | null;
 }
 
-export default function ProfileDropdown({ displayName, email }: ProfileDropdownProps) {
+export default function ProfileDropdown({ displayName, email, image }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -68,9 +69,15 @@ export default function ProfileDropdown({ displayName, email }: ProfileDropdownP
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg px-3 py-2 transition"
       >
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
-          {getInitials()}
-        </div>
+        {image ? (
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200">
+            <img src={image} alt="Profile" className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+            {getInitials()}
+          </div>
+        )}
         <div className="text-left hidden md:block">
           <p className="text-sm font-medium text-gray-900 dark:text-slate-100">{displayName || email}</p>
           {displayName && <p className="text-xs text-gray-500 dark:text-slate-400">{email}</p>}

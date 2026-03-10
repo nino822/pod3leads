@@ -564,7 +564,11 @@ export default function Dashboard() {
           </motion.div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <ProfileDropdown displayName={user?.displayName || user?.name || undefined} email={user?.email || undefined} />
+            <ProfileDropdown
+              displayName={user?.displayName || user?.name || undefined}
+              email={user?.email || undefined}
+              image={user?.image || undefined}
+            />
           </div>
         </div>
       </header>
