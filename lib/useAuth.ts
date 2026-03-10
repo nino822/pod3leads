@@ -8,6 +8,7 @@ export interface ClientAuthUser {
   name: string | null;
   displayName: string | null;
   role: "ADMIN" | "MEMBER";
+  image?: string | null;
 }
 
 export function useAuth() {

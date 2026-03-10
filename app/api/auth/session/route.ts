@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
         name: user.name,
         displayName: user.displayName,
         role: user.role,
+        image: user.image || null,
       },
     });
   } catch (error) {

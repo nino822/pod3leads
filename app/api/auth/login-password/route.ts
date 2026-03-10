@@ -45,6 +45,14 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("password login error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    const details =
+      message.includes("column") || message.includes("role")
+        ? "Database schema is out of sync. Run `npx prisma db push` for the latest role/password changes, then try again."
+        : message;
+    return NextResponse.json(
+      { error: "Internal server error", details },
+      { status: 500 }
+    );
   }
 }

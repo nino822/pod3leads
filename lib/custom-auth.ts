@@ -13,6 +13,7 @@ export interface AuthUser {
   name: string | null;
   displayName: string | null;
   role: "ADMIN" | "MEMBER";
+  image?: string | null;
 }
 
 function isAdminEmail(email: string) {
@@ -250,6 +251,7 @@ export async function getSessionFromRequest(request: NextRequest): Promise<AuthU
     email: user.email,
     name: user.name,
     displayName: user.displayName,
+    image: user.image,
     role:
       isAdminEmail(user.email) || (user as { role?: string }).role === "ADMIN"
         ? "ADMIN"
