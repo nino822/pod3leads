@@ -28,13 +28,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired code" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return NextResponse.json(
-        { error: "Account not found. You may need an invite to access this dashboard." },
-        { status: 403 }
-      );
-    }
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: {
+        email,
+        name: email.split("@")[0],
+      },
+    });
 
     const { rawToken, expiresAt } = await createUserSession(user.id);
 
