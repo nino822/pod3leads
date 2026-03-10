@@ -314,12 +314,12 @@ export default function Dashboard() {
                   <input
                     type="text"
                     value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
                     onKeyPress={(e) => {
-                      if (e.key === "Enter" && code.length === 6) handleVerifyCode();
+                      if (e.key === "Enter" && code.length >= 6) handleVerifyCode();
                     }}
-                    placeholder="000000"
-                    maxLength={6}
+                    placeholder="00000000"
+                    maxLength={8}
                     inputMode="numeric"
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition text-center text-2xl tracking-widest font-mono"
                   />
@@ -368,7 +368,7 @@ export default function Dashboard() {
                 >
                   <button
                     onClick={handleVerifyCode}
-                    disabled={authLoading || code.length !== 6}
+                    disabled={authLoading || code.length < 6}
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 transform hover:scale-105 disabled:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {authLoading ? (
