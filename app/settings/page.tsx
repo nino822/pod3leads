@@ -10,16 +10,19 @@ interface Invite {
   id: string;
   email: string;
   name: string;
+  role: "ADMIN" | "MEMBER";
   createdAt: string;
 }
 
 export default function Settings() {
   const { user, status, refresh } = useAuth();
   const router = useRouter();
+  const isAdmin = user?.role === "ADMIN";
   const [displayName, setDisplayName] = useState("");
   const [invites, setInvites] = useState<Invite[]>([]);
   const [newInviteEmail, setNewInviteEmail] = useState("");
   const [newInviteName, setNewInviteName] = useState("");
+  const [newInviteRole, setNewInviteRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
   const [isSavingName, setIsSavingName] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
   const [error, setError] = useState("");
@@ -35,9 +38,19 @@ export default function Settings() {
   useEffect(() => {
     if (user) {
       fetchSettings();
-      fetchInvites();
+      if (user.role === "ADMIN") {
+        fetchInvites();
+      }
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const interval = setInterval(() => {
+      fetchInvites();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isAdmin]);
 
   const fetchSettings = async () => {
     try {
@@ -53,7 +66,7 @@ export default function Settings() {
 
   const fetchInvites = async () => {
     try {
-      const res = await fetch("/api/invites");
+      const res = await fetch("/api/invites", { cache: "no-store" });
       const data = await res.json();
       if (data.invites) {
         setInvites(data.invites);
@@ -115,6 +128,7 @@ export default function Settings() {
         body: JSON.stringify({
           email: newInviteEmail.trim(),
           name: newInviteName.trim(),
+          role: newInviteRole,
         }),
       });
 
@@ -143,6 +157,7 @@ export default function Settings() {
 
       setNewInviteEmail("");
       setNewInviteName("");
+      setNewInviteRole("MEMBER");
       fetchInvites();
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -224,7 +239,7 @@ export default function Settings() {
           </motion.div>
         )}
 
-        {inviteLink && (
+        {isAdmin && inviteLink && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -266,10 +281,11 @@ export default function Settings() {
           </div>
         </motion.div>
 
+        {isAdmin ? (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 border border-transparent dark:border-slate-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Invite Users</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <input
               type="email"
               value={newInviteEmail}
@@ -284,10 +300,18 @@ export default function Settings() {
               placeholder="Name"
               className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
             />
+            <select
+              value={newInviteRole}
+              onChange={(e) => setNewInviteRole(e.target.value as "ADMIN" | "MEMBER")}
+              className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+            >
+              <option value="MEMBER">Member</option>
+              <option value="ADMIN">Admin</option>
+            </select>
             <button
               onClick={handleAddInvite}
               disabled={isInviting}
-              className="md:col-span-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
+              className="md:col-span-3 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
             >
               {isInviting ? "Adding..." : "Add Invite"}
             </button>
@@ -301,6 +325,7 @@ export default function Settings() {
                   <div>
                     <p className="font-medium text-gray-900 dark:text-slate-100">{invite.name}</p>
                     <p className="text-sm text-gray-600 dark:text-slate-400">{invite.email}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-500">Role: {invite.role}</p>
                   </div>
                   <button onClick={() => handleDeleteInvite(invite.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">
                     Remove
@@ -312,6 +337,12 @@ export default function Settings() {
             <p className="text-sm text-gray-500 dark:text-slate-400 text-center py-4">No invites yet</p>
           )}
         </motion.div>
+        ) : (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 border border-transparent dark:border-slate-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">Role: Member</h2>
+            <p className="text-sm text-gray-600 dark:text-slate-400">Members cannot invite users.</p>
+          </motion.div>
+        )}
       </main>
     </div>
   );

@@ -3,13 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helper";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
-async function syncInviteToSupabaseAuth(email: string, inviteUrl: string) {
+async function syncInviteToSupabaseAuth(email: string, role: "ADMIN" | "MEMBER", inviteUrl: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
   // First try sending Supabase invite email.
   const { error: inviteEmailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
     email,
-    { redirectTo: inviteUrl }
+    {
+      redirectTo: inviteUrl,
+      data: { role },
+    }
   );
 
   if (!inviteEmailError) {
@@ -20,6 +23,7 @@ async function syncInviteToSupabaseAuth(email: string, inviteUrl: string) {
   const { error: createUserError } = await supabaseAdmin.auth.admin.createUser({
     email,
     email_confirm: true,
+    user_metadata: { role },
   });
 
   const inviteErrorMessage = inviteEmailError.message || "Unknown invite email error";
@@ -49,12 +53,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const invites = await prisma.invite.findMany({
     where: { invitedBy: user.id },
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ invites });
+  return NextResponse.json(
+    { invites },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    }
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -65,9 +80,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { email, name } = await request.json();
+    if (user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { email, name, role } = await request.json();
     const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
     const normalizedName = typeof name === "string" ? name.trim() : "";
+    const normalizedRole: "ADMIN" | "MEMBER" = role === "ADMIN" ? "ADMIN" : "MEMBER";
 
     if (!normalizedEmail || !normalizedName) {
       return NextResponse.json(
@@ -89,15 +109,17 @@ export async function POST(request: NextRequest) {
           where: { email: normalizedEmail },
           data: {
             name: normalizedName,
+            role: normalizedRole,
             invitedBy: user.id,
-          },
+          } as any,
         })
       : await prisma.invite.create({
           data: {
             email: normalizedEmail,
             name: normalizedName,
+            role: normalizedRole,
             invitedBy: user.id,
-          },
+          } as any,
         });
 
     const configuredBaseUrl =
@@ -111,7 +133,7 @@ export async function POST(request: NextRequest) {
     }
     const inviteUrl = `${inviteBaseUrl}/dashboard`;
 
-    const result = await syncInviteToSupabaseAuth(normalizedEmail, inviteUrl);
+    const result = await syncInviteToSupabaseAuth(normalizedEmail, normalizedRole, inviteUrl);
 
     const status = existingInvite ? 200 : 201;
     return NextResponse.json(
@@ -139,6 +161,10 @@ export async function DELETE(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);

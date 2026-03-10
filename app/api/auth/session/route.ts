@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
         email: user.email,
         name: user.name,
         displayName: user.displayName,
+        role: user.role,
       },
     });
   } catch (error) {

@@ -12,6 +12,15 @@ export interface AuthUser {
   email: string;
   name: string | null;
   displayName: string | null;
+  role: "ADMIN" | "MEMBER";
+}
+
+function isAdminEmail(email: string) {
+  const list = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.trim().toLowerCase());
 }
 
 function getSessionSecret() {
@@ -241,6 +250,10 @@ export async function getSessionFromRequest(request: NextRequest): Promise<AuthU
     email: user.email,
     name: user.name,
     displayName: user.displayName,
+    role:
+      isAdminEmail(user.email) || (user as { role?: string }).role === "ADMIN"
+        ? "ADMIN"
+        : "MEMBER",
   };
 }
 

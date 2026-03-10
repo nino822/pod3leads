@@ -7,6 +7,7 @@ export interface ClientAuthUser {
   email: string;
   name: string | null;
   displayName: string | null;
+  role: "ADMIN" | "MEMBER";
 }
 
 export function useAuth() {

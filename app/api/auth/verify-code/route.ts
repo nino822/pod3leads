@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       prisma.user.findUnique({ where: { email } }),
       prisma.invite.findFirst({ where: { email } }),
     ]);
+    const inviteRole = (invite as { role?: "ADMIN" | "MEMBER" } | null)?.role;
 
     if (!existingUser && !invite) {
       return NextResponse.json(
@@ -43,11 +44,12 @@ export async function POST(request: NextRequest) {
     // Auto-create in our DB on first login; use invite name if available.
     const user = await prisma.user.upsert({
       where: { email },
-      update: {},
+      update: inviteRole ? ({ role: inviteRole } as any) : {},
       create: {
         email,
         name: invite?.name || email.split("@")[0],
-      },
+        role: inviteRole || "MEMBER",
+      } as any,
     });
 
     const { rawToken, expiresAt } = await createUserSession(user.id);
@@ -59,6 +61,7 @@ export async function POST(request: NextRequest) {
         email: user.email!,
         name: user.name,
         displayName: user.displayName,
+        role: (user as { role?: string }).role === "ADMIN" ? "ADMIN" : "MEMBER",
       },
     });
 
