@@ -196,7 +196,10 @@ export default function Dashboard() {
       });
       const result = await res.json();
       if (!res.ok) {
-        throw new Error(result.error || "Failed to send code");
+        const errorMessage = result?.details
+          ? `${result.error || "Failed to send code"}: ${result.details}`
+          : result?.error || "Failed to send code";
+        throw new Error(errorMessage);
       }
       setCodeSent(true);
     } catch (err) {
