@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helper";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
   const user = await getAuthUser(request);
@@ -61,10 +62,31 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const baseUrl =
+    // Keep Auth in sync immediately so invited users can request OTP right away,
+    // even if DB webhook configuration is incomplete.
+    try {
+      const supabaseAdmin = getSupabaseAdmin();
+      const { error } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        email_confirm: true,
+      });
+      if (error && !error.message.toLowerCase().includes("already")) {
+        console.error("Failed to add invited user to Supabase Auth:", error.message);
+      }
+    } catch (syncError) {
+      console.error("Invite auth sync error:", syncError);
+    }
+
+    const configuredBaseUrl =
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-    const inviteUrl = `${baseUrl}/dashboard`;
+    let inviteBaseUrl = configuredBaseUrl;
+    try {
+      inviteBaseUrl = new URL(configuredBaseUrl).origin;
+    } catch {
+      inviteBaseUrl = configuredBaseUrl.replace(/\/$/, "");
+    }
+    const inviteUrl = `${inviteBaseUrl}/dashboard`;
 
     // Invite record created. Supabase DB webhook will add the user to Supabase Auth
     // so they can receive OTP codes. Share the login URL with them manually.
