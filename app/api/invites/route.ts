@@ -3,6 +3,33 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth-helper";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
+async function syncInviteToSupabaseAuth(email: string, inviteUrl: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  // Provision auth account directly so OTP works without invite-email dependencies.
+  const { error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+  });
+
+  const createUserErrorMessage = createUserError?.message || null;
+  const createFailed = !!createUserErrorMessage && !createUserErrorMessage.toLowerCase().includes("already");
+
+  if (createFailed) {
+    return {
+      emailSent: false,
+      warning: "Invite sync failed. Check Supabase service role key and auth email settings.",
+      details: createUserErrorMessage,
+    };
+  }
+
+  return {
+    emailSent: false,
+    warning: null as string | null,
+    details: null as string | null,
+  };
+}
+
 export async function GET(request: NextRequest) {
   const user = await getAuthUser(request);
 
@@ -43,24 +70,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
     }
 
-    const existingInvite = await prisma.invite.findUnique({
-      where: { email: normalizedEmail },
-    });
+    const existingInvite = await prisma.invite.findUnique({ where: { email: normalizedEmail } });
 
-    if (existingInvite) {
-      return NextResponse.json(
-        { error: "User already invited" },
-        { status: 400 }
-      );
-    }
-
-    const invite = await prisma.invite.create({
-      data: {
-        email: normalizedEmail,
-        name: normalizedName,
-        invitedBy: user.id,
-      },
-    });
+    const invite = existingInvite
+      ? await prisma.invite.update({
+          where: { email: normalizedEmail },
+          data: {
+            name: normalizedName,
+            invitedBy: user.id,
+          },
+        })
+      : await prisma.invite.create({
+          data: {
+            email: normalizedEmail,
+            name: normalizedName,
+            invitedBy: user.id,
+          },
+        });
 
     const configuredBaseUrl =
       process.env.NEXTAUTH_URL ||
@@ -73,45 +99,20 @@ export async function POST(request: NextRequest) {
     }
     const inviteUrl = `${inviteBaseUrl}/dashboard`;
 
-    const supabaseAdmin = getSupabaseAdmin();
-    let emailSent = false;
-    let warning: string | null = null;
+    const result = await syncInviteToSupabaseAuth(normalizedEmail, inviteUrl);
 
-    // Primary path: send a Supabase invite email and create auth user if needed.
-    const { error: inviteEmailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      normalizedEmail,
-      { redirectTo: inviteUrl }
+    const status = existingInvite ? 200 : 201;
+    return NextResponse.json(
+      {
+        invite,
+        inviteUrl,
+        emailSent: result.emailSent,
+        warning: result.warning,
+        details: result.details,
+        resent: !!existingInvite,
+      },
+      { status }
     );
-
-    if (!inviteEmailError) {
-      emailSent = true;
-    } else {
-      const msg = inviteEmailError.message.toLowerCase();
-
-      // Fallback: if email couldn't be sent, ensure auth user still exists for OTP login.
-      const { error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-        email: normalizedEmail,
-        email_confirm: true,
-      });
-
-      const isAlreadyRegistered =
-        msg.includes("already") ||
-        msg.includes("registered") ||
-        msg.includes("exists");
-      const createFailed = createUserError && !createUserError.message.toLowerCase().includes("already");
-
-      if (!isAlreadyRegistered) {
-        console.error("Supabase invite email error:", inviteEmailError.message);
-      }
-      if (createFailed) {
-        console.error("Supabase create user fallback error:", createUserError.message);
-      }
-
-      warning =
-        "Invite created. If no invite email arrives, the user can still request OTP login directly.";
-    }
-
-    return NextResponse.json({ invite, inviteUrl, emailSent, warning }, { status: 201 });
   } catch (error) {
     console.error("Invite POST error:", error);
     return NextResponse.json(
