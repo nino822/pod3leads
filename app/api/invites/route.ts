@@ -6,12 +6,23 @@ import { getSupabaseAdmin } from "@/lib/supabase-server";
 async function syncInviteToSupabaseAuth(email: string, inviteUrl: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
-  // Provision auth account directly so OTP works without invite-email dependencies.
+  // First try sending Supabase invite email.
+  const { error: inviteEmailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    email,
+    { redirectTo: inviteUrl }
+  );
+
+  if (!inviteEmailError) {
+    return { emailSent: true, warning: null as string | null, details: null as string | null };
+  }
+
+  // Fallback: provision auth account directly so OTP still works.
   const { error: createUserError } = await supabaseAdmin.auth.admin.createUser({
     email,
     email_confirm: true,
   });
 
+  const inviteErrorMessage = inviteEmailError.message || "Unknown invite email error";
   const createUserErrorMessage = createUserError?.message || null;
   const createFailed = !!createUserErrorMessage && !createUserErrorMessage.toLowerCase().includes("already");
 
@@ -19,14 +30,15 @@ async function syncInviteToSupabaseAuth(email: string, inviteUrl: string) {
     return {
       emailSent: false,
       warning: "Invite sync failed. Check Supabase service role key and auth email settings.",
-      details: createUserErrorMessage,
+      details: `${inviteErrorMessage}; fallback create user failed: ${createUserErrorMessage}`,
     };
   }
 
   return {
     emailSent: false,
-    warning: null as string | null,
-    details: null as string | null,
+    warning:
+      "Invite created, but invite email was not sent. User can still log in with OTP.",
+    details: inviteErrorMessage,
   };
 }
 
