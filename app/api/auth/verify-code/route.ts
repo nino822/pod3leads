@@ -28,12 +28,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired code" }, { status: 401 });
     }
 
+    // Check if the email is an existing user OR has been invited
+    const [existingUser, invite] = await Promise.all([
+      prisma.user.findUnique({ where: { email } }),
+      prisma.invite.findFirst({ where: { email } }),
+    ]);
+
+    if (!existingUser && !invite) {
+      return NextResponse.json(
+        { error: "Access denied. Contact your administrator to request access." },
+        { status: 403 }
+      );
+    }
+
     const user = await prisma.user.upsert({
       where: { email },
       update: {},
       create: {
         email,
-        name: email.split("@")[0],
+        name: invite?.name || email.split("@")[0],
       },
     });
 
