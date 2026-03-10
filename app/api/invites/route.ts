@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendInviteEmail } from "@/lib/email";
 import { getAuthUser } from "@/lib/auth-helper";
 
 export async function GET(request: NextRequest) {
@@ -62,29 +61,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send invite email when configured. If delivery fails, keep the invite and return a fallback link.
-    const inviterName = user.displayName || user.name || user.email || "A team member";
-    const emailResult = await sendInviteEmail(normalizedEmail, normalizedName, inviterName);
     const baseUrl =
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
     const inviteUrl = `${baseUrl}/dashboard`;
 
-    if (!emailResult.success) {
-      return NextResponse.json(
-        {
-          invite,
-          emailSent: false,
-          inviteUrl,
-          warning:
-            "Invite was created, but email delivery failed. Share the invite link manually.",
-          details: emailResult.error || "Unknown email delivery error",
-        },
-        { status: 201 }
-      );
-    }
-
-    return NextResponse.json({ invite, emailSent: true, inviteUrl }, { status: 201 });
+    // Invite record created. Supabase DB webhook will add the user to Supabase Auth
+    // so they can receive OTP codes. Share the login URL with them manually.
+    return NextResponse.json({ invite, inviteUrl }, { status: 201 });
   } catch (error) {
     console.error("Invite POST error:", error);
     return NextResponse.json(

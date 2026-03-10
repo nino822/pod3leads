@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseServer();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: false },
     });
 
     if (error) {
-      console.error("Supabase OTP error:", error.message);
+      // Don't expose whether email exists — return generic message
       return NextResponse.json(
-        { error: "Failed to send verification code" },
-        { status: 500 }
+        { error: "If this email is authorized, a code has been sent." },
+        { status: 200 }
       );
     }
 
