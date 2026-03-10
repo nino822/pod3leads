@@ -22,10 +22,14 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Supabase OTP send error:", error.message);
+      const details =
+        error.message.includes("Signups not allowed")
+          ? "Supabase Auth setting is blocking OTP. Enable Email signups in Supabase Auth settings, then try again."
+          : error.message;
       return NextResponse.json(
         {
           error: "Failed to send OTP code",
-          details: error.message,
+          details,
         },
         { status: 400 }
       );
