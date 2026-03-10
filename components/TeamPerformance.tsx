@@ -286,17 +286,17 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-      <div id="team-performance-section" className={`${showAtRiskAccounts ? "xl:col-span-2" : "xl:col-span-3"} bg-white rounded-lg shadow p-4`}>
+      <div id="team-performance-section" className={`${showAtRiskAccounts ? "xl:col-span-2" : "xl:col-span-3"} bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700`}>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Team Performance</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Team Performance</h3>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden">
+            <div className="inline-flex rounded-lg border border-gray-300 dark:border-slate-600 overflow-hidden">
               <button
                 onClick={() => setTab("posters")}
                 className={`px-4 py-2 text-sm font-medium ${
                   tab === "posters"
                     ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
+                    : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
                 }`}
               >
                 Posters
@@ -306,18 +306,18 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
                 className={`px-4 py-2 text-sm font-medium ${
                   tab === "copywriters"
                     ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
+                    : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800"
                 }`}
               >
                 Copywriters
               </button>
             </div>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
               <input
                 type="checkbox"
                 checked={hideInactiveRecent}
                 onChange={(e) => setHideInactiveRecent(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
               />
               Hide not active this week
             </label>
@@ -358,7 +358,7 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
           </div>
         </div>
 
-        <p className="text-xs text-gray-600 mb-3">
+        <p className="text-xs text-gray-600 dark:text-slate-400 mb-3">
           Team performance uses the selected year only. "Active" filtering is based on the current week. Hover the info icons for metric definitions and hover percentages to see account names.
         </p>
 
@@ -369,8 +369,8 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
         >
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600 border-b">
-                <th className="sticky left-0 z-20 bg-gray-50 py-1 px-2 text-sm font-semibold">Name</th>
+              <tr className="bg-gray-50 dark:bg-slate-800 text-left text-xs uppercase tracking-wide text-gray-600 dark:text-slate-400 border-b border-gray-200 dark:border-slate-700">
+                <th className="sticky left-0 z-20 bg-gray-50 dark:bg-slate-800 py-1 px-2 text-sm font-semibold">Name</th>
                 <th className="py-1 px-2 text-right text-xs">
                   <span className="inline-flex items-center gap-1 justify-end w-full">
                     Active/Eng
@@ -461,8 +461,8 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
 
                 return (
                   <Fragment key={rowKey}>
-                    <tr className="group/row border-b border-gray-100 hover:bg-gray-50">
-                      <td className="sticky left-0 z-10 bg-white py-1 px-2 font-medium text-sm text-gray-900 group-hover/row:bg-gray-50 whitespace-nowrap">
+                    <tr className="group/row border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800">
+                      <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 py-1 px-2 font-medium text-sm text-gray-900 dark:text-slate-100 group-hover/row:bg-gray-50 dark:group-hover/row:bg-slate-800 whitespace-nowrap">
                         <button
                           onClick={() => toggleContributorChart(row.name)}
                           className="text-left text-blue-700 hover:text-blue-900"
@@ -502,7 +502,7 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
                     <AnimatePresence initial={false}>
                       {isExpanded && (
                         <motion.tr
-                          className="bg-gray-50"
+                          className="bg-gray-50 dark:bg-slate-800"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
@@ -531,7 +531,7 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
               })}
               {tableRows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-4 text-center text-sm text-gray-500">
+                  <td colSpan={8} className="py-4 text-center text-sm text-gray-500 dark:text-slate-400">
                     No {tab} data found with current filters.
                   </td>
                 </tr>
@@ -544,7 +544,7 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
       {hoverTooltip.visible && (
         <div
           ref={accountsPopoverRef}
-          className="fixed z-[100] w-[320px] rounded-md border border-gray-200 bg-white p-3 text-left text-xs text-gray-700 shadow-lg"
+          className="fixed z-[100] w-[320px] rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-left text-xs text-gray-700 dark:text-slate-300 shadow-lg"
           style={{
             left: hoverTooltip.x,
             top: hoverTooltip.y,
@@ -558,7 +558,7 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
                 <button
                   type="button"
                   onClick={() => setHoverTooltip((prev) => ({ ...prev, visible: false, key: "" }))}
-                  className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-600 hover:bg-gray-100"
+                  className="rounded border border-gray-300 dark:border-slate-600 px-1.5 py-0.5 text-[10px] text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
                 >
                   Close
                 </button>
@@ -574,9 +574,9 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
       )}
 
       {showAtRiskAccounts && (
-      <div id="at-risk-accounts-section" className="bg-white rounded-lg shadow p-4">
+      <div id="at-risk-accounts-section" className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h3 className="text-lg font-semibold text-gray-900">At-risk Accounts</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">At-risk Accounts</h3>
           <div className="flex flex-wrap items-center gap-2">
             <ExportMenu
               options={[
@@ -609,11 +609,11 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
             />
           </div>
         </div>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
           Set your own criteria using average leads per week. Accounts below update automatically based on these values.
         </p>
         <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <label className="text-xs text-gray-700">
+          <label className="text-xs text-gray-700 dark:text-slate-300">
             Minimum Avg Leads Per Week
             <input
               type="text"
@@ -621,11 +621,11 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
               placeholder="Any"
               value={atRiskCriteria.minAvgLeadsPerWeek}
               onChange={(e) => handleCriteriaNumberChange("minAvgLeadsPerWeek", e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 w-full rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-sm text-gray-900 dark:text-slate-100"
             />
           </label>
         </div>
-        <label className="mb-3 inline-flex items-center gap-2 text-xs text-gray-700">
+        <label className="mb-3 inline-flex items-center gap-2 text-xs text-gray-700 dark:text-slate-300">
           <input
             type="checkbox"
             checked={atRiskCriteria.onlyLowerThanPrevious}
@@ -635,22 +635,22 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
                 onlyLowerThanPrevious: e.target.checked,
               }))
             }
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
           />
           Show only accounts where current average is lower than previous average
         </label>
         <div className="mb-3 grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded border border-gray-200 bg-gray-50 p-2">
-            <p className="text-gray-500">Matching Accounts</p>
-            <p className="text-base font-semibold text-gray-900">{atRiskMetrics.total}</p>
+          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+            <p className="text-gray-500 dark:text-slate-400">Matching Accounts</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.total}</p>
           </div>
-          <div className="rounded border border-gray-200 bg-gray-50 p-2">
-            <p className="text-gray-500">Avg Current Leads/Week</p>
-            <p className="text-base font-semibold text-gray-900">{atRiskMetrics.avgCurrentLeadsPerWeek.toFixed(1)}</p>
+          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+            <p className="text-gray-500 dark:text-slate-400">Avg Current Leads/Week</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgCurrentLeadsPerWeek.toFixed(1)}</p>
           </div>
-          <div className="rounded border border-gray-200 bg-gray-50 p-2">
-            <p className="text-gray-500">Avg Previous Leads/Week</p>
-            <p className="text-base font-semibold text-gray-900">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
+          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+            <p className="text-gray-500 dark:text-slate-400">Avg Previous Leads/Week</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
           </div>
         </div>
         <div id="at-risk-accounts-chart" className="space-y-2 max-h-[420px] overflow-auto pr-1">
@@ -658,19 +658,19 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
             <div
               key={account.client}
               data-account-card="true"
-              className="border border-red-100 bg-red-50 rounded-md p-3"
+              className="border border-red-100 dark:border-red-900/60 bg-red-50 dark:bg-red-950/25 rounded-md p-3"
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="font-semibold text-gray-900 leading-tight">{account.client}</p>
+                <p className="font-semibold text-gray-900 dark:text-slate-100 leading-tight">{account.client}</p>
                 <span className="text-xs font-medium text-red-700">Change: {account.delta}</span>
               </div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
                 Status: {account.currentStatus} | Recent: {account.recentAvg} | Previous: {account.previousAvg}
               </p>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
                 Poster: {account.poster || "-"} | CW: {account.copywriter || "-"}
               </p>
-              <div className="mt-3 h-56 w-full rounded border border-red-100 bg-white p-1">
+              <div className="mt-3 h-56 w-full rounded border border-red-100 dark:border-red-900/60 bg-white dark:bg-slate-900 p-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={(account.weeklyTrend || []).map((point) => ({
@@ -704,7 +704,7 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
             </div>
           ))}
           {filteredAtRiskAccounts.length === 0 && (
-            <div className="border border-gray-200 rounded-md p-4 text-sm text-gray-500">
+            <div className="border border-gray-200 dark:border-slate-700 rounded-md p-4 text-sm text-gray-500 dark:text-slate-400">
               No accounts match your current criteria.
             </div>
           )}

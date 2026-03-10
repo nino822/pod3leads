@@ -65,18 +65,18 @@ export default function ClientChart({
 
   if (chartData.length === 0) {
     return (
-      <div className="p-4 text-center text-gray-500">
+      <div className="p-4 text-center text-gray-500 dark:text-slate-400">
         No data available for this client
       </div>
     );
   }
 
   return (
-    <div className="p-4 bg-gray-50">
-      <h4 className="text-sm font-semibold text-gray-700 mb-3">
+    <div className="p-4 bg-gray-50 dark:bg-slate-900">
+      <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-3">
         {clientName} - Weekly Leads Trend
       </h4>
-      <p className="text-xs text-gray-600 mb-2">Poster: {posterSummary}</p>
+      <p className="text-xs text-gray-600 dark:text-slate-400 mb-2">Poster: {posterSummary}</p>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={chartData}>
           {onboardingRanges.map((weekLabel) => (
@@ -152,7 +152,7 @@ export default function ClientChart({
           />
         </LineChart>
       </ResponsiveContainer>
-      <p className="mt-2 text-xs text-gray-500">
+      <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
         Purple marker = first week appeared, blue shaded weeks = onboarding.
       </p>
     </div>

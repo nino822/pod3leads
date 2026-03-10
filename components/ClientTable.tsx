@@ -44,35 +44,35 @@ export default function ClientTable({ clients, filters }: ClientTableProps) {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="bg-white rounded-lg shadow overflow-hidden"
+      className="bg-white dark:bg-slate-900 rounded-lg shadow overflow-hidden border border-transparent dark:border-slate-700"
     >
       <table className="w-full">
-        <thead className="bg-gray-100">
+        <thead className="bg-gray-100 dark:bg-slate-800">
           <tr>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-slate-100">
               Client
             </th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-slate-100">
               Status
             </th>
-            <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
+            <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-slate-100">
               Weekly
             </th>
-            <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
+            <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-slate-100">
               Monthly
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
           {filtered.map((client, i) => (
             <motion.tr
               key={`${client.client}-${i}`}
               variants={rowVariants}
-              className={`hover:bg-gray-50 transition ${
+              className={`hover:bg-gray-50 dark:hover:bg-slate-800 transition ${
                 client.status === "paused" ? "opacity-60" : ""
               }`}
             >
-              <td className="px-6 py-4 text-sm font-medium text-gray-900">
+              <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">
                 {client.client}
               </td>
               <td className="px-6 py-4 text-sm">
@@ -86,7 +86,7 @@ export default function ClientTable({ clients, filters }: ClientTableProps) {
                   {client.status === "active" ? "Active" : "Paused"}
                 </span>
               </td>
-              <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">
+              <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100">
                 {client.weekly}
               </td>
               <td className="px-6 py-4 text-sm text-right font-semibold text-blue-600">
@@ -97,7 +97,7 @@ export default function ClientTable({ clients, filters }: ClientTableProps) {
         </tbody>
       </table>
       {filtered.length === 0 && (
-        <div className="px-6 py-8 text-center text-gray-500">
+        <div className="px-6 py-8 text-center text-gray-500 dark:text-slate-400">
           No clients found
         </div>
       )}

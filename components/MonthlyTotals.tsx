@@ -217,30 +217,30 @@ export default function MonthlyTotals({
   }
 
   return (
-    <div id="monthly-totals-section" className="bg-white rounded-lg shadow p-4 mb-8">
+    <div id="monthly-totals-section" className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 mb-8 border border-transparent dark:border-slate-700">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
           {effectiveGraphMode === "weekly" ? "Leads Per Week (All Clients)" : "Leads Per Month (All Clients)"} {showAllYears && "- Timeline from 2025"}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="text-sm text-gray-700 flex items-center gap-2">
+          <label className="text-sm text-gray-700 dark:text-slate-300 flex items-center gap-2">
             <span className="font-medium">Year</span>
             <select
               value={selectedYear}
               onChange={(e) => onYearChange(parseInt(e.target.value, 10))}
-              className="border border-gray-300 rounded px-2 py-1 text-sm"
+              className="border border-gray-300 dark:border-slate-600 rounded px-2 py-1 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
               disabled={showAllYears}
             >
               <option value={2025}>2025</option>
               <option value={2026}>2026</option>
             </select>
           </label>
-          <label className="text-sm text-gray-700 flex items-center gap-2">
+          <label className="text-sm text-gray-700 dark:text-slate-300 flex items-center gap-2">
             <span className="font-medium">View</span>
             <select
               value={effectiveGraphMode}
               onChange={(e) => setGraphMode(e.target.value as GraphMode)}
-              className="border border-gray-300 rounded px-2 py-1 text-sm"
+              className="border border-gray-300 dark:border-slate-600 rounded px-2 py-1 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
               disabled={showAllYears}
             >
               <option value="monthly">Monthly</option>
@@ -258,7 +258,7 @@ export default function MonthlyTotals({
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               showAllYears
                 ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-300 dark:hover:bg-slate-600"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {loadingAllYears ? "Loading..." : showAllYears ? "Current Year" : "View Timeline"}
@@ -274,7 +274,7 @@ export default function MonthlyTotals({
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               showActiveClients
                 ? "bg-purple-600 text-white hover:bg-purple-700"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-300 dark:hover:bg-slate-600"
             }`}
           >
             {showActiveClients ? "Hide" : "Show"} Avg Active Clients
@@ -323,7 +323,7 @@ export default function MonthlyTotals({
         </div>
       </div>
 
-      <div id="monthly-totals-chart" className="h-72 w-full rounded-md border border-gray-200 bg-gray-50 p-2 mb-4">
+      <div id="monthly-totals-chart" className="h-72 w-full rounded-md border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 mb-4">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 16, right: 12, left: 8, bottom: 16 }}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -368,11 +368,11 @@ export default function MonthlyTotals({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="border border-gray-200 rounded-md p-3 bg-gray-50"
+              className="border border-gray-200 dark:border-slate-700 rounded-md p-3 bg-gray-50 dark:bg-slate-800"
             >
-              <p className="text-sm text-gray-600">{item.label}</p>
-              <p className="text-2xl font-bold text-gray-900">{item.total}</p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-sm text-gray-600 dark:text-slate-400">{item.label}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{item.total}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                 Avg active clients: {item.activeClients}
               </p>
             </motion.div>

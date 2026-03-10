@@ -32,7 +32,7 @@ function ContributorAverageChart({
 }: ContributorAverageChartProps) {
   if (!weeklyAverages || weeklyAverages.length === 0) {
     return (
-      <div className="py-2 px-4 text-center text-xs text-gray-500">
+      <div className="py-2 px-4 text-center text-xs text-gray-500 dark:text-slate-400">
         No weekly average data available.
       </div>
     );
@@ -48,8 +48,8 @@ function ContributorAverageChart({
   );
 
   return (
-    <div className="py-2 px-4 bg-white border-t border-gray-100">
-      <h4 className="text-xs font-semibold text-gray-600 mb-2">
+    <div className="py-2 px-4 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-700">
+      <h4 className="text-xs font-semibold text-gray-600 dark:text-slate-300 mb-2">
         {contributorName} - Weekly Averages
       </h4>
       <ResponsiveContainer width="100%" height={100}>

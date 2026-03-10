@@ -55,6 +55,10 @@ GOOGLE_PRIVATE_KEY=
 GMAIL_USER=
 GMAIL_APP_PASSWORD=
 
+# Optional: force display sender name/email in inbox
+EMAIL_FROM_NAME=Pod 3 Dashboard
+EMAIL_FROM_EMAIL=
+
 # Optional: disable in production by default
 ALLOW_FIRST_USER_BOOTSTRAP=false
 ```

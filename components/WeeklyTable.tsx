@@ -223,7 +223,7 @@ export default function WeeklyTable({
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 text-center text-gray-500 dark:text-slate-400 border border-transparent dark:border-slate-700">
         No weekly data available
       </div>
     );
@@ -235,17 +235,17 @@ export default function WeeklyTable({
       ref={wrapperRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-lg shadow overflow-hidden"
+      className="bg-white dark:bg-slate-900 rounded-lg shadow overflow-hidden border border-transparent dark:border-slate-700"
     >
-      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-lg font-semibold text-gray-900">Client Leads Table</h3>
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Client Leads Table</h3>
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <label className="inline-flex items-center gap-2 text-gray-700">
+          <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
             <span>Month</span>
             <select
               value={selectedMonthFilter}
               onChange={(e) => setSelectedMonthFilter(e.target.value)}
-              className="h-8 rounded border border-gray-300 px-2 text-sm"
+              className="h-8 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 text-sm text-gray-900 dark:text-slate-100"
             >
               {availableMonths.map((month) => (
                 <option key={month} value={month}>
@@ -254,7 +254,7 @@ export default function WeeklyTable({
               ))}
             </select>
           </label>
-          <label className="inline-flex items-center gap-2 text-gray-700">
+          <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
             <span>Min Leads</span>
             <input
               type="number"
@@ -263,51 +263,51 @@ export default function WeeklyTable({
               placeholder="0"
               value={minMonthlyLeadsFilter}
               onChange={(e) => setMinMonthlyLeadsFilter(e.target.value)}
-              className="h-8 w-20 rounded border border-gray-300 px-2 text-sm"
+              className="h-8 w-20 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 text-sm text-gray-900 dark:text-slate-100"
             />
           </label>
-          <label className="inline-flex items-center gap-2 text-gray-700">
+          <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
             <input
               type="checkbox"
               checked={areAllStatusesSelected}
               onChange={(e) => onAllStatusesToggle(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
             />
             <span>All</span>
           </label>
-          <label className="inline-flex items-center gap-2 text-gray-700">
+          <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
             <input
               type="checkbox"
               checked={statusFilters.active}
               onChange={(e) => onStatusToggle("active", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
             />
             <span>Active</span>
           </label>
-          <label className="inline-flex items-center gap-2 text-gray-700">
+          <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
             <input
               type="checkbox"
               checked={statusFilters["engagement only"]}
               onChange={(e) => onStatusToggle("engagement only", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
             />
             <span>Engagement Only</span>
           </label>
-          <label className="inline-flex items-center gap-2 text-gray-700">
+          <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
             <input
               type="checkbox"
               checked={statusFilters.onboarding}
               onChange={(e) => onStatusToggle("onboarding", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
             />
             <span>Onboarding</span>
           </label>
-          <label className="inline-flex items-center gap-2 text-gray-700">
+          <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
             <input
               type="checkbox"
               checked={statusFilters.paused}
               onChange={(e) => onStatusToggle("paused", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
             />
             <span>Paused</span>
           </label>
@@ -350,7 +350,7 @@ export default function WeeklyTable({
 
       <div
         ref={topScrollRef}
-        className="fixed z-40 overflow-x-auto overflow-y-hidden rounded border border-gray-300 bg-white shadow"
+        className="fixed z-40 overflow-x-auto overflow-y-hidden rounded border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow"
         style={{
           height: "18px",
           bottom: "12px",
@@ -415,23 +415,27 @@ export default function WeeklyTable({
                     transition={{ delay: idx * 0.05 }}
                     className={`group border-t transition-colors ${
                       displayStatus === "paused"
-                        ? "bg-red-50 hover:bg-red-100"
-                        : "hover:bg-gray-50"
+                        ? "bg-red-50 dark:bg-red-950/25 hover:bg-red-100 dark:hover:bg-red-900/30"
+                        : "hover:bg-gray-50 dark:hover:bg-slate-800"
                     }`}
                   >
-                    <td className={`sticky left-0 z-[30] w-64 min-w-[260px] px-6 py-4 font-medium text-gray-900 ${
-                      displayStatus === "paused" ? "bg-red-50 group-hover:bg-red-100" : "bg-white group-hover:bg-gray-50"
+                    <td className={`sticky left-0 z-[30] w-64 min-w-[260px] px-6 py-4 font-medium text-gray-900 dark:text-slate-100 ${
+                      displayStatus === "paused"
+                        ? "bg-red-50 dark:bg-red-950/25 group-hover:bg-red-100 dark:group-hover:bg-red-900/30"
+                        : "bg-white dark:bg-slate-900 group-hover:bg-gray-50 dark:group-hover:bg-slate-800"
                     }`}>
                       <button
                         onClick={() => toggleChart(client.client)}
-                        className="text-left text-blue-700 hover:text-blue-900"
+                        className="text-left text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                         title="Click to toggle chart"
                       >
                         {client.client}
                       </button>
                     </td>
                     <td className={`sticky left-[260px] z-[30] w-48 min-w-[180px] px-6 py-4 ${
-                      displayStatus === "paused" ? "bg-red-50 group-hover:bg-red-100" : "bg-white group-hover:bg-gray-50"
+                      displayStatus === "paused"
+                        ? "bg-red-50 dark:bg-red-950/25 group-hover:bg-red-100 dark:group-hover:bg-red-900/30"
+                        : "bg-white dark:bg-slate-900 group-hover:bg-gray-50 dark:group-hover:bg-slate-800"
                     }`}>
                       <button
                         onClick={() => toggleStatus(client.client, displayStatus)}
@@ -470,7 +474,7 @@ export default function WeeklyTable({
                       return (
                         <td
                           key={week}
-                          className="px-4 py-4 text-center text-gray-900 font-medium"
+                          className="px-4 py-4 text-center text-gray-900 dark:text-slate-200 font-medium"
                         >
                           {displayValue}
                         </td>
@@ -485,7 +489,7 @@ export default function WeeklyTable({
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="bg-gray-50"
+                      className="bg-gray-50 dark:bg-slate-800"
                     >
                       <td colSpan={sortedWeeks.length + 3}>
                         <ClientChart
@@ -504,19 +508,19 @@ export default function WeeklyTable({
             })}
             {filteredData.length === 0 && (
               <tr>
-                <td colSpan={sortedWeeks.length + 3} className="px-6 py-10 text-center text-gray-500">
+                <td colSpan={sortedWeeks.length + 3} className="px-6 py-10 text-center text-gray-500 dark:text-slate-400">
                   No clients match the current month/leads filter.
                 </td>
               </tr>
             )}
           </tbody>
-          <tfoot className="bg-gray-100 border-t-2 border-gray-300">
+          <tfoot className="bg-gray-100 dark:bg-slate-800 border-t-2 border-gray-300 dark:border-slate-700">
             <tr className="font-bold">
-              <td colSpan={2} className="sticky left-0 z-[30] bg-gray-100 px-6 py-4">
+              <td colSpan={2} className="sticky left-0 z-[30] bg-gray-100 dark:bg-slate-800 px-6 py-4 text-gray-900 dark:text-slate-100">
                 Weekly Totals
               </td>
               {sortedWeeks.map((week) => (
-                <td key={week} className="px-4 py-4 text-center text-gray-900">
+                <td key={week} className="px-4 py-4 text-center text-gray-900 dark:text-slate-200">
                   {weekTotals.get(week) || 0}
                 </td>
               ))}

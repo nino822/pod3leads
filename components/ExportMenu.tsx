@@ -63,16 +63,16 @@ export default function ExportMenu({ options, disabled = false }: ExportMenuProp
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-md shadow-lg z-50">
           {options.map((option) => (
             <button
               key={option.key}
               onClick={() => runExport(option.key, option.action)}
               disabled={exporting !== null}
-              className="w-full text-left px-4 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed first:rounded-t-md last:rounded-b-md transition"
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed first:rounded-t-md last:rounded-b-md transition"
             >
-              <span className="text-sm font-medium text-gray-900">{option.label}</span>
-              {exporting === option.key && <span className="text-xs text-gray-500 ml-2">exporting...</span>}
+              <span className="text-sm font-medium text-gray-900 dark:text-slate-100">{option.label}</span>
+              {exporting === option.key && <span className="text-xs text-gray-500 dark:text-slate-400 ml-2">exporting...</span>}
             </button>
           ))}
         </div>

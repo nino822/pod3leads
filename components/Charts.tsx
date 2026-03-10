@@ -79,9 +79,9 @@ export default function Charts({ clients }: ChartsProps) {
       {/* Top Clients */}
       <motion.div
         variants={chartVariants}
-        className="bg-white rounded-lg shadow p-6"
+        className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 border border-transparent dark:border-slate-700"
       >
-        <h3 className="text-lg font-semibold mb-4">Top 10 Performing Clients</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Top 10 Performing Clients</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={topClients}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -96,9 +96,9 @@ export default function Charts({ clients }: ChartsProps) {
       {/* Low Clients */}
       <motion.div
         variants={chartVariants}
-        className="bg-white rounded-lg shadow p-6"
+        className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 border border-transparent dark:border-slate-700"
       >
-        <h3 className="text-lg font-semibold mb-4">Low Performing Clients</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Low Performing Clients</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={lowClients}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -113,9 +113,9 @@ export default function Charts({ clients }: ChartsProps) {
       {/* Overall Distribution */}
       <motion.div
         variants={chartVariants}
-        className="bg-white rounded-lg shadow p-6 lg:col-span-2"
+        className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 lg:col-span-2 border border-transparent dark:border-slate-700"
       >
-        <h3 className="text-lg font-semibold mb-4">Lead Distribution by Client</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Lead Distribution by Client</h3>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={leadsPerClientData}>
             <CartesianGrid strokeDasharray="3 3" />

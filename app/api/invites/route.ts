@@ -62,25 +62,29 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send invite email
+    // Send invite email when configured. If delivery fails, keep the invite and return a fallback link.
     const inviterName = user.displayName || user.name || user.email || "A team member";
     const emailResult = await sendInviteEmail(normalizedEmail, normalizedName, inviterName);
+    const baseUrl =
+      process.env.NEXTAUTH_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+    const inviteUrl = `${baseUrl}/dashboard`;
 
     if (!emailResult.success) {
-      await prisma.invite.delete({
-        where: { id: invite.id },
-      });
-
       return NextResponse.json(
         {
-          error: "Invite email failed to send. Please check Gmail settings and try again.",
+          invite,
+          emailSent: false,
+          inviteUrl,
+          warning:
+            "Invite was created, but email delivery is not configured. Share the invite link manually.",
           details: emailResult.error || "Unknown email delivery error",
         },
-        { status: 502 }
+        { status: 201 }
       );
     }
 
-    return NextResponse.json({ invite }, { status: 201 });
+    return NextResponse.json({ invite, emailSent: true, inviteUrl }, { status: 201 });
   } catch (error) {
     console.error("Invite POST error:", error);
     return NextResponse.json(

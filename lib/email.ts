@@ -1,18 +1,82 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+function getMailerConfig() {
+  const user = process.env.GMAIL_USER?.trim();
+  const pass = process.env.GMAIL_APP_PASSWORD?.trim();
+
+  if (!user || !pass) {
+    return {
+      ok: false as const,
+      error:
+        "Email is not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in your environment.",
+    };
+  }
+
+  return {
+    ok: true as const,
+    user,
+    pass,
+  };
+}
+
+function getDashboardBaseUrl() {
+  const nextAuthUrl = process.env.NEXTAUTH_URL?.trim();
+  if (nextAuthUrl) return nextAuthUrl;
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) return `https://${vercelUrl}`;
+
+  return "http://localhost:3000";
+}
+
+function getFromHeader(defaultEmail: string) {
+  const senderName = process.env.EMAIL_FROM_NAME?.trim() || "Pod 3 Dashboard";
+  const senderEmail = process.env.EMAIL_FROM_EMAIL?.trim() || defaultEmail;
+  return `${senderName} <${senderEmail}>`;
+}
+
+async function sendEmail(options: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}) {
+  const config = getMailerConfig();
+  if (!config.ok) {
+    return { success: false as const, error: config.error };
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: config.user,
+      pass: config.pass,
+    },
+  });
+
+  try {
+    const info = await transporter.sendMail({
+      from: getFromHeader(config.user),
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+    });
+
+    return { success: true as const, messageId: info.messageId };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
 
 export async function sendInviteEmail(
   toEmail: string,
   toName: string,
   invitedByName: string,
-  dashboardUrl: string = "http://localhost:3000"
+  dashboardUrl: string = getDashboardBaseUrl()
 ) {
   try {
     const subject = `You're invited to Pod 3 Dashboard!`;
@@ -52,16 +116,20 @@ export async function sendInviteEmail(
       </html>
     `;
 
-    const info = await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    const result = await sendEmail({
       to: toEmail,
-      subject: subject,
+      subject,
       html: htmlContent,
       text: `Hi ${toName},\n\n${invitedByName} has invited you to access the Pod 3 Dashboard!\n\nSign in here: ${dashboardUrl}/dashboard`,
     });
 
-    console.log(`Email sent to ${toEmail}:`, info.messageId);
-    return { success: true, messageId: info.messageId };
+    if (!result.success) {
+      console.error(`Failed to send email to ${toEmail}:`, result.error);
+      return result;
+    }
+
+    console.log(`Email sent to ${toEmail}:`, result.messageId);
+    return { success: true, messageId: result.messageId };
   } catch (error) {
     console.error(`Failed to send email to ${toEmail}:`, error);
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
@@ -99,15 +167,12 @@ export async function sendLoginCodeEmail(toEmail: string, code: string) {
       </html>
     `;
 
-    const info = await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    return await sendEmail({
       to: toEmail,
       subject,
       html: htmlContent,
       text: `Your Pod 3 Dashboard login code is ${code}. This code expires in 10 minutes.`,
     });
-
-    return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`Failed to send login code email to ${toEmail}:`, error);
     return {
@@ -150,15 +215,12 @@ export async function sendPasswordResetEmail(toEmail: string, code: string) {
       </html>
     `;
 
-    const info = await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    return await sendEmail({
       to: toEmail,
       subject,
       html: htmlContent,
       text: `Your password reset code for Pod 3 Dashboard is ${code}. This code expires in 10 minutes. If you did not request this, please ignore this email.`,
     });
-
-    return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`Failed to send password reset email to ${toEmail}:`, error);
     return {

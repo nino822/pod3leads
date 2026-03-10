@@ -34,41 +34,41 @@ export default function Filters({ onFilterChange }: FiltersProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h3 className="text-lg font-semibold mb-4">Filters</h3>
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Filters</h3>
       <div className="space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Year
           </label>
           <select
             value={year}
             onChange={handleYearChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border border-gray-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
           >
             <option value={2025}>2025</option>
             <option value={2026}>2026</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
             Client (Optional)
           </label>
           <select
             value={client || ""}
             onChange={handleClientChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border border-gray-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
           >
             <option value="">All Clients</option>
             {/* Client options will be populated from data */}
           </select>
         </div>
-        <label className="flex items-center gap-2 text-sm text-gray-700">
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
           <input
             type="checkbox"
             checked={hidePaused}
             onChange={handleHidePausedChange}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
           />
           Hide paused accounts
         </label>
