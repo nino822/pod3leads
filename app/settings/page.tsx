@@ -19,7 +19,8 @@ export default function Settings() {
   const [invites, setInvites] = useState<Invite[]>([]);
   const [newInviteEmail, setNewInviteEmail] = useState("");
   const [newInviteName, setNewInviteName] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -66,7 +67,7 @@ export default function Settings() {
       return;
     }
 
-    setLoading(true);
+    setIsSavingName(true);
     setError("");
     setSuccess("");
 
@@ -87,7 +88,7 @@ export default function Settings() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update");
     } finally {
-      setLoading(false);
+      setIsSavingName(false);
     }
   };
 
@@ -97,7 +98,7 @@ export default function Settings() {
       return;
     }
 
-    setLoading(true);
+    setIsInviting(true);
     setError("");
     setSuccess("");
 
@@ -111,10 +112,14 @@ export default function Settings() {
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to add invite");
+        const errorMessage = data?.details
+          ? `${data.error || "Failed to add invite"}: ${data.details}`
+          : data?.error || "Failed to add invite";
+        throw new Error(errorMessage);
       }
 
       setSuccess("Invite sent successfully!");
@@ -123,9 +128,13 @@ export default function Settings() {
       fetchInvites();
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add invite");
+      if (err instanceof SyntaxError) {
+        setError("Invite request failed with an invalid server response.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to add invite");
+      }
     } finally {
-      setLoading(false);
+      setIsInviting(false);
     }
   };
 
@@ -205,8 +214,8 @@ export default function Settings() {
               placeholder="Enter your display name"
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
             />
-            <button onClick={handleSaveName} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50">
-              {loading ? "Saving..." : "Save"}
+            <button onClick={handleSaveName} disabled={isSavingName} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50">
+              {isSavingName ? "Saving..." : "Save"}
             </button>
           </div>
         </motion.div>
@@ -231,10 +240,10 @@ export default function Settings() {
             />
             <button
               onClick={handleAddInvite}
-              disabled={loading}
+              disabled={isInviting}
               className="md:col-span-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
             >
-              {loading ? "Adding..." : "Add Invite"}
+              {isInviting ? "Adding..." : "Add Invite"}
             </button>
           </div>
 

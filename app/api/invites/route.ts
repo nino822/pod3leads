@@ -19,67 +19,75 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getAuthUser(request);
+  try {
+    const user = await getAuthUser(request);
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const { email, name } = await request.json();
-  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
-  const normalizedName = typeof name === "string" ? name.trim() : "";
+    const { email, name } = await request.json();
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    const normalizedName = typeof name === "string" ? name.trim() : "";
 
-  if (!normalizedEmail || !normalizedName) {
-    return NextResponse.json(
-      { error: "Email and name are required" },
-      { status: 400 }
-    );
-  }
+    if (!normalizedEmail || !normalizedName) {
+      return NextResponse.json(
+        { error: "Email and name are required" },
+        { status: 400 }
+      );
+    }
 
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(normalizedEmail)) {
-    return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
-  }
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+    }
 
-  const existingInvite = await prisma.invite.findUnique({
-    where: { email: normalizedEmail },
-  });
-
-  if (existingInvite) {
-    return NextResponse.json(
-      { error: "User already invited" },
-      { status: 400 }
-    );
-  }
-
-  const invite = await prisma.invite.create({
-    data: {
-      email: normalizedEmail,
-      name: normalizedName,
-      invitedBy: user.id,
-    },
-  });
-
-  // Send invite email
-  const inviterName = user.displayName || user.name || user.email || "A team member";
-  const emailResult = await sendInviteEmail(normalizedEmail, normalizedName, inviterName);
-
-  if (!emailResult.success) {
-    await prisma.invite.delete({
-      where: { id: invite.id },
+    const existingInvite = await prisma.invite.findUnique({
+      where: { email: normalizedEmail },
     });
 
-    return NextResponse.json(
-      {
-        error: "Invite email failed to send. Please check Gmail settings and try again.",
-        details: emailResult.error || "Unknown email delivery error",
+    if (existingInvite) {
+      return NextResponse.json(
+        { error: "User already invited" },
+        { status: 400 }
+      );
+    }
+
+    const invite = await prisma.invite.create({
+      data: {
+        email: normalizedEmail,
+        name: normalizedName,
+        invitedBy: user.id,
       },
-      { status: 502 }
+    });
+
+    // Send invite email
+    const inviterName = user.displayName || user.name || user.email || "A team member";
+    const emailResult = await sendInviteEmail(normalizedEmail, normalizedName, inviterName);
+
+    if (!emailResult.success) {
+      await prisma.invite.delete({
+        where: { id: invite.id },
+      });
+
+      return NextResponse.json(
+        {
+          error: "Invite email failed to send. Please check Gmail settings and try again.",
+          details: emailResult.error || "Unknown email delivery error",
+        },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ invite }, { status: 201 });
+  } catch (error) {
+    console.error("Invite POST error:", error);
+    return NextResponse.json(
+      { error: "Failed to create invite", details: String(error) },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({ invite }, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest) {
