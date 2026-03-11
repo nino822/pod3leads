@@ -499,6 +499,15 @@ export default function WeeklyTable({
               const displayStatus = getStatus(client.client, client.status);
               const isExpanded = expandedClients.has(client.client);
               const chartId = getClientChartId(client.client);
+              const rowSlug = slugifyClientName(client.client) || "client";
+              const exportMenuOptions = [
+                { label: "Data CSV", key: `${rowSlug}-data-csv`, action: () => exportClientCsv(client) },
+                { label: "Data Excel", key: `${rowSlug}-data-xlsx`, action: () => exportClientExcel(client) },
+                { label: "Data PDF", key: `${rowSlug}-data-pdf`, action: () => exportClientDataPdf(client) },
+                { label: "Chart PNG", key: `${rowSlug}-chart-png`, action: () => exportClientChartPng(client.client) },
+                { label: "Chart PDF", key: `${rowSlug}-chart-pdf`, action: () => exportClientChartPdf(client.client) },
+                { label: "Data+Chart PDF", key: `${rowSlug}-report-pdf`, action: () => exportClientReportPdf(client) },
+              ];
               return (
                 <Fragment key={client.client}>
                   <motion.tr
@@ -529,24 +538,30 @@ export default function WeeklyTable({
                         ? "bg-red-50 dark:bg-red-950/25 group-hover:bg-red-100 dark:group-hover:bg-red-900/30"
                         : "bg-white dark:bg-slate-900 group-hover:bg-gray-50 dark:group-hover:bg-slate-800"
                     }`}>
-                      <button
-                        onClick={() => toggleStatus(client.client, displayStatus)}
-                        className={`inline-block px-3 py-1 rounded-full text-sm font-semibold cursor-pointer transition-all hover:scale-105 ${
-                          displayStatus === "active"
-                            ? "bg-green-100 text-green-800 hover:bg-green-200"
-                            : displayStatus === "onboarding"
-                            ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                            : displayStatus === "engagement only"
-                            ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                            : "bg-red-100 text-red-800 hover:bg-red-200"
-                        }`}
-                        title="Click to cycle status"
-                      >
-                        {displayStatus === "active" ? "Active" 
-                          : displayStatus === "onboarding" ? "Onboarding"
-                          : displayStatus === "engagement only" ? "Engagement Only"
-                          : "Paused"}
-                      </button>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <button
+                          onClick={() => toggleStatus(client.client, displayStatus)}
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-semibold cursor-pointer transition-all hover:scale-105 ${
+                            displayStatus === "active"
+                              ? "bg-green-100 text-green-800 hover:bg-green-200"
+                              : displayStatus === "onboarding"
+                              ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                              : displayStatus === "engagement only"
+                              ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                              : "bg-red-100 text-red-800 hover:bg-red-200"
+                          }`}
+                          title="Click to cycle status"
+                        >
+                          {displayStatus === "active" ? "Active" 
+                            : displayStatus === "onboarding" ? "Onboarding"
+                            : displayStatus === "engagement only" ? "Engagement Only"
+                            : "Paused"}
+                        </button>
+                        <ExportMenu
+                          options={exportMenuOptions}
+                          buttonClassName="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-2 py-1 rounded transition disabled:opacity-50 flex items-center gap-1"
+                        />
+                      </div>
                     </td>
                     {sortedWeeks.map((week) => {
                       const value = client.weeks[week];
@@ -584,50 +599,6 @@ export default function WeeklyTable({
                       className="bg-gray-50 dark:bg-slate-800"
                     >
                       <td colSpan={sortedWeeks.length + 3}>
-                        <div className="mb-3 flex flex-wrap items-center justify-end gap-2 text-xs text-gray-600">
-                          <button
-                            type="button"
-                            onClick={() => exportClientCsv(client)}
-                            className="rounded border border-blue-600 px-3 py-1 text-blue-600 hover:bg-blue-50"
-                          >
-                            Export CSV
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => exportClientExcel(client)}
-                            className="rounded border border-gray-500 px-3 py-1 text-gray-600 hover:bg-gray-100"
-                          >
-                            Export Excel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => exportClientDataPdf(client)}
-                            className="rounded border border-green-600 px-3 py-1 text-green-600 hover:bg-green-50"
-                          >
-                            Export PDF
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => exportClientReportPdf(client)}
-                            className="rounded border border-indigo-600 px-3 py-1 text-indigo-600 hover:bg-indigo-50"
-                          >
-                            Export Report
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => exportClientChartPng(client.client)}
-                            className="rounded border border-purple-600 px-3 py-1 text-purple-600 hover:bg-purple-50"
-                          >
-                            Chart PNG
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => exportClientChartPdf(client.client)}
-                            className="rounded border border-teal-600 px-3 py-1 text-teal-600 hover:bg-teal-50"
-                          >
-                            Chart PDF
-                          </button>
-                        </div>
                         <div id={chartId}>
                           <ClientChart
                             clientName={client.client}

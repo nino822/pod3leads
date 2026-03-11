@@ -2,14 +2,6 @@ import { addDays, format } from "date-fns";
 
 const normalizeWeekNumber = (week: number): number => Math.max(1, Math.floor(week));
 
-function getFirstMondayOfWeekOne(year: number): Date {
-  let firstMonday = new Date(year - 1, 11, 28);
-  while (firstMonday.getDay() !== 1) {
-    firstMonday = addDays(firstMonday, 1);
-  }
-  return firstMonday;
-}
-
 function getWeekDisplayBounds(week: number, year: number) {
   const normalizedWeek = normalizeWeekNumber(week);
   if (normalizedWeek === 1) {
@@ -19,7 +11,8 @@ function getWeekDisplayBounds(week: number, year: number) {
     };
   }
 
-  const startDate = addDays(getFirstMondayOfWeekOne(year), (normalizedWeek - 1) * 7);
+  const weekTwoStart = new Date(year, 0, 5);
+  const startDate = addDays(weekTwoStart, (normalizedWeek - 2) * 7);
   return {
     startDate,
     endDate: addDays(startDate, 6),
@@ -37,12 +30,12 @@ export function getWeekNumberForDate(date: Date): number {
     return 1;
   }
 
-  const firstMonday = getFirstMondayOfWeekOne(year);
-  if (normalized < firstMonday) {
+  const weekTwoStart = new Date(year, 0, 5);
+  if (normalized < weekTwoStart) {
     return 1;
   }
 
-  const diffDays = Math.floor((normalized.getTime() - firstMonday.getTime()) / MS_PER_DAY);
+  const diffDays = Math.floor((normalized.getTime() - weekTwoStart.getTime()) / MS_PER_DAY);
   return Math.floor(diffDays / 7) + 2;
 }
 

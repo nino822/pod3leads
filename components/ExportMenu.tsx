@@ -11,9 +11,14 @@ interface ExportOption {
 interface ExportMenuProps {
   options: ExportOption[];
   disabled?: boolean;
+  buttonClassName?: string;
 }
 
-export default function ExportMenu({ options, disabled = false }: ExportMenuProps) {
+export default function ExportMenu({
+  options,
+  disabled = false,
+  buttonClassName,
+}: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [exporting, setExporting] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,7 +54,10 @@ export default function ExportMenu({ options, disabled = false }: ExportMenuProp
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || exporting !== null}
-        className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition disabled:opacity-50 flex items-center gap-2"
+        className={
+          buttonClassName ||
+          "bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition disabled:opacity-50 flex items-center gap-2"
+        }
       >
         {exporting ? "..." : "Export"}
         <svg
