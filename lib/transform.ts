@@ -141,8 +141,13 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
         headerDates.push({ index: col, date: new Date(parsed) });
         foundDate = true;
       }
-      currentHeaderDates = headerDates;
-      if (headerDates.length === 0) {
+      const yearStart = new Date(year, 0, 1);
+      const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+      const yearFilteredDates = headerDates.filter(
+        (entry) => entry.date >= yearStart && entry.date <= yearEnd
+      );
+      currentHeaderDates = yearFilteredDates.length ? yearFilteredDates : headerDates;
+      if (currentHeaderDates.length === 0) {
         continue;
       }
       if (!foundFirstHeader) {

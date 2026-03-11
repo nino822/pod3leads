@@ -651,6 +651,7 @@ export default function Dashboard() {
               onStatusToggle={handleStatusToggle}
               onAllStatusesToggle={handleAllStatusesToggle}
               currentWeek={data.currentWeek}
+              selectedYear={filters.year}
             />
           </motion.div>
         )}

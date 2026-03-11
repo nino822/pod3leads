@@ -24,6 +24,7 @@ interface ClientChartProps {
   currentPoster?: string;
   firstSeenWeek?: number;
   currentWeek?: number;
+  year?: number;
 }
 
 export default function ClientChart({
@@ -34,7 +35,9 @@ export default function ClientChart({
   currentPoster,
   firstSeenWeek,
   currentWeek,
+  year,
 }: ClientChartProps) {
+  const targetYear = year ?? new Date().getFullYear();
   // Convert weekly data to chart format
   const chartData = Object.entries(weeklyData)
     .filter(([weekStr]) => {
@@ -43,7 +46,7 @@ export default function ClientChart({
     })
     .sort(([a], [b]) => parseInt(a) - parseInt(b))
     .map(([week, count]) => ({
-      week: getWeekDateRange(parseInt(week)),
+      week: getWeekDateRange(parseInt(week), targetYear),
       weekNum: parseInt(week),
       leads: count,
       status: statusByWeek[parseInt(week)] || "active",

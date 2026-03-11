@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
     // - 2025:  "Leads Tracking 2025"
     const rangeCandidates =
       year === 2025
-        ? ["Leads Tracking 2025!A1:ZZ", "2025 Leads Tracking!A1:ZZ", "Leads Tracking!A1:ZZ"]
-        : ["Leads Tracking!A1:ZZ", `Leads Tracking ${year}!A1:ZZ`];
+        ? ["Leads Tracking 2025!A:AM", "2025 Leads Tracking!A:AM", "Leads Tracking!A:AM"]
+        : ["Leads Tracking!A:AM", `Leads Tracking ${year}!A:AM`];
 
     let sheetData: any[] = [];
     let selectedRange: string | null = null;

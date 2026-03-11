@@ -69,7 +69,8 @@ const monthShort: Record<string, string> = {
 
 function aggregateWeeklyFromWeeklyData(
   weeklyData: WeeklyClientData[],
-  maxWeek?: number
+  maxWeek?: number,
+  year?: number
 ): ChartPoint[] {
   const weekTotals = new Map<number, number>();
   const weeklyClientSets = new Map<number, Set<string>>();
@@ -96,7 +97,7 @@ function aggregateWeeklyFromWeeklyData(
     .filter((week) => typeof maxWeek !== "number" || week <= maxWeek)
     .sort((a, b) => a - b)
     .map((week) => ({
-      label: getWeekDateRange(week),
+      label: getWeekDateRange(week, year ?? new Date().getFullYear()),
       total: weekTotals.get(week) || 0,
       activeClients: weeklyClientSets.get(week)?.size || 0,
     }));
@@ -155,7 +156,7 @@ export default function MonthlyTotals({
     }
 
     if (effectiveGraphMode === "weekly") {
-      return aggregateWeeklyFromWeeklyData(weeklyData, currentWeek);
+      return aggregateWeeklyFromWeeklyData(weeklyData, currentWeek, selectedYear);
     }
 
     return totals.map((item) => ({

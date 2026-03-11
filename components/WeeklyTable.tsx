@@ -30,6 +30,7 @@ interface WeeklyTableProps {
   onStatusToggle: (status: ClientStatus, checked: boolean) => void;
   onAllStatusesToggle: (checked: boolean) => void;
   currentWeek: number;
+  selectedYear: number;
 }
 
 export default function WeeklyTable({
@@ -39,6 +40,7 @@ export default function WeeklyTable({
   onStatusToggle,
   onAllStatusesToggle,
   currentWeek,
+  selectedYear,
 }: WeeklyTableProps) {
   const [statusOverrides, setStatusOverrides] = useState<Record<string, "active" | "onboarding" | "engagement only" | "paused">>({});
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>("All Months");
@@ -89,13 +91,15 @@ export default function WeeklyTable({
   const sortedWeeks = Array.from({ length: normalizedCurrentWeek }, (_, idx) => idx + 1);
   const clientExportWeeks = sortedWeeks;
 
+  const targetYear = selectedYear ?? new Date().getFullYear();
+
   const buildClientExportRows = (client: WeeklyClientData) => {
     const firstSeenWeek = client.firstSeenWeek ?? 1;
     return clientExportWeeks.map((week) => {
       const rowStatus = client.statusByWeek?.[week] ?? client.status;
       const leadsValue = week < firstSeenWeek ? "-" : client.weeks[week] ?? 0;
       return {
-        Week: getWeekDateRange(week),
+        Week: getWeekDateRange(week, targetYear),
         "Week #": week,
         Leads: leadsValue,
         Status: rowStatus,
@@ -154,7 +158,7 @@ export default function WeeklyTable({
   };
 
   // Map weeks to months using week date ranges
-  const getMonthForWeek = (week: number): string => getWeekMonth(week);
+  const getMonthForWeek = (week: number): string => getWeekMonth(week, targetYear);
 
   // Group weeks by month for colspan
   const monthGroups: { month: string; weeks: number[]; colspan: number }[] = [];
@@ -230,7 +234,7 @@ export default function WeeklyTable({
           };
 
           sortedWeeks.forEach((week) => {
-            row[getWeekDateRange(week)] = client.weeks[week] ?? 0;
+          row[getWeekDateRange(week, targetYear)] = client.weeks[week] ?? 0;
           });
 
           row.Total = clientTotals.get(client.client) || 0;
@@ -525,7 +529,7 @@ export default function WeeklyTable({
                   key={week}
                   className="sticky top-[52px] z-50 bg-blue-700 px-4 py-2 text-center font-semibold min-w-[120px] border-l border-blue-600"
                 >
-                  {getWeekDateRange(week)}
+                  {getWeekDateRange(week, targetYear)}
                 </th>
               ))}
             </tr>
@@ -644,6 +648,7 @@ export default function WeeklyTable({
                             currentPoster={client.currentPoster}
                             firstSeenWeek={client.firstSeenWeek}
                             currentWeek={normalizedCurrentWeek}
+                            year={targetYear}
                           />
                         </div>
                       </td>
