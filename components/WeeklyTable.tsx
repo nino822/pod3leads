@@ -96,13 +96,18 @@ export default function WeeklyTable({
 
   // Helper to get Monday-Sunday date range for a week number
   const getWeekDateRange = (week: number, year: number = new Date().getFullYear()): string => {
-    // Week 1 starts on the first Monday on/after Dec 28 of the previous year
-    let firstMonday = new Date(year - 1, 11, 28); // Dec 28 of previous year
+    let firstMonday = new Date(year - 1, 11, 28);
     while (firstMonday.getDay() !== 1) {
       firstMonday = addDays(firstMonday, 1);
     }
     const startDate = addDays(firstMonday, (week - 1) * 7);
     const endDate = addDays(startDate, 6);
+    // For week 1, show Jan 1–4
+    if (week === 1) {
+      const jan1 = new Date(year, 0, 1);
+      const jan4 = new Date(year, 0, 4);
+      return `${format(jan1, "MMM d")}-${format(jan4, "MMM d")}`;
+    }
     return `${format(startDate, "MMM d")}-${format(endDate, "MMM d")}`;
   };
 

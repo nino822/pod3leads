@@ -90,6 +90,12 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
       }
       const startDate = addDays(firstMonday, (week - 1) * 7);
       const endDate = addDays(startDate, 6);
+      // For week 1, show Jan 1–4
+      if (week === 1) {
+        const jan1 = new Date(year, 0, 1);
+        const jan4 = new Date(year, 0, 4);
+        return `${format(jan1, "MMM d")}-${format(jan4, "MMM d")}`;
+      }
       return `${format(startDate, "MMM d")}-${format(endDate, "MMM d")}`;
     };
   const [expandedContributors, setExpandedContributors] = useState<Set<string>>(new Set());
