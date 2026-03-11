@@ -14,12 +14,7 @@ Dashboard for tracking Pod 3 client leads from Google Sheets with Google OAuth, 
 
 ## Features
 
-- Google sign-in and invite-only access
-- Weekly and monthly leads analytics
-- Week-level graph mode (W1-W52/53)
-- Status filters and monthly/weekly views
-- Team performance and at-risk accounts
-- CSV, Excel, PNG, PDF exports
+ - Date-level graph mode (e.g., Jan 1-4, Jan 5-11, ...)
 
 ## Local Setup
 

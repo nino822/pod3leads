@@ -1,6 +1,7 @@
 "use client";
 
 import { WeeklyClientData } from "@/lib/transform";
+import { format, addDays, startOfYear } from "date-fns";
 import { motion } from "framer-motion";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ClientChart from "./ClientChart";
@@ -87,7 +88,7 @@ export default function WeeklyTable({
   const sortedWeeks = Array.from(allWeeks).sort((a, b) => a - b);
 
   // Map weeks to months (Week 1-5 = January, Week 6-9 = February, Week 10-13 = March)
-  const getMonthForWeek = (week: number): string => {
+  const getMonthForWeek = (week: number): string => { 
     if (week <= 5) return "January";
     if (week <= 9) return "February";
     if (week <= 13) return "March";
@@ -95,6 +96,20 @@ export default function WeeklyTable({
     if (week <= 22) return "May";
     if (week <= 26) return "June";
     return `Week ${week}`;
+  };
+
+  // Helper to get Monday-Sunday date range for a week number
+  const getWeekDateRange = (week: number, year: number = new Date().getFullYear()): string => {
+    // Week 1 starts Jan 1, but we want Monday-Sunday
+    // Find first Monday of the year
+    let firstMonday = startOfYear(new Date(year, 0, 1));
+    while (firstMonday.getDay() !== 1) {
+      firstMonday = addDays(firstMonday, 1);
+    }
+    // Calculate start date for this week
+    const startDate = addDays(firstMonday, (week - 1) * 7);
+    const endDate = addDays(startDate, 6);
+    return `${format(startDate, "MMM d")}-${format(endDate, "MMM d")}`;
   };
 
   // Group weeks by month for colspan
@@ -387,7 +402,7 @@ export default function WeeklyTable({
                   {group.month}
                 </th>
               ))}
-              <th className="sticky top-0 z-50 bg-blue-800 px-6 py-3 text-center font-bold" rowSpan={2}>
+              <th className="sticky top-0 z-50 bg-blue-800 px-6 py-3 text-center font-bold" rowSpan={2}> 
                 Total
               </th>
             </tr>
@@ -396,9 +411,9 @@ export default function WeeklyTable({
               {sortedWeeks.map((week) => (
                 <th
                   key={week}
-                  className="sticky top-[52px] z-50 bg-blue-700 px-4 py-2 text-center font-semibold min-w-[80px] border-l border-blue-600"
+                  className="sticky top-[52px] z-50 bg-blue-700 px-4 py-2 text-center font-semibold min-w-[120px] border-l border-blue-600"
                 >
-                  Week {week}
+                  {getWeekDateRange(week)}
                 </th>
               ))}
             </tr>
