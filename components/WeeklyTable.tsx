@@ -49,6 +49,7 @@ export default function WeeklyTable({
     left: 0,
     width: 0,
   });
+  const [exportStatusSelection, setExportStatusSelection] = useState(statusFilters);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
@@ -220,21 +221,26 @@ export default function WeeklyTable({
 
   const exportRows = useMemo(
     () =>
-      filteredData.map((client) => {
-        const row: Record<string, string | number> = {
-          Client: client.client,
-          Status: getStatus(client.client, client.status),
-        };
+      filteredData
+        .filter((client) => exportStatusSelection[getStatus(client.client, client.status)])
+        .map((client) => {
+          const row: Record<string, string | number> = {
+            Client: client.client,
+            Status: getStatus(client.client, client.status),
+          };
 
-        sortedWeeks.forEach((week) => {
-          row[getWeekDateRange(week)] = client.weeks[week] ?? 0;
-        });
+          sortedWeeks.forEach((week) => {
+            row[getWeekDateRange(week)] = client.weeks[week] ?? 0;
+          });
 
-        row.Total = clientTotals.get(client.client) || 0;
-        return row;
-      }),
-    [filteredData, sortedWeeks, clientTotals, statusOverrides]
+          row.Total = clientTotals.get(client.client) || 0;
+          return row;
+        }),
+    [filteredData, sortedWeeks, clientTotals, statusOverrides, exportStatusSelection]
   );
+  useEffect(() => {
+    setExportStatusSelection(statusFilters);
+  }, [statusFilters]);
 
 
   useEffect(() => {
@@ -373,23 +379,62 @@ export default function WeeklyTable({
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="font-semibold text-gray-700 dark:text-slate-300">Export Filter:</span>
             <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-              <input type="checkbox" checked={statusFilters.active} onChange={(e) => onStatusToggle("active", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                checked={exportStatusSelection.active}
+                onChange={(e) => setExportStatusSelection((prev) => ({ ...prev, active: e.target.checked }))}
+                className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+              />
               <span>Active</span>
             </label>
             <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-              <input type="checkbox" checked={statusFilters["engagement only"]} onChange={(e) => onStatusToggle("engagement only", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                checked={exportStatusSelection["engagement only"]}
+                onChange={(e) =>
+                  setExportStatusSelection((prev) => ({
+                    ...prev,
+                    "engagement only": e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+              />
               <span>Engagement Only</span>
             </label>
             <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-              <input type="checkbox" checked={statusFilters.onboarding} onChange={(e) => onStatusToggle("onboarding", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                checked={exportStatusSelection.onboarding}
+                onChange={(e) =>
+                  setExportStatusSelection((prev) => ({ ...prev, onboarding: e.target.checked }))
+                }
+                className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+              />
               <span>Onboarding</span>
             </label>
             <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-              <input type="checkbox" checked={statusFilters.paused} onChange={(e) => onStatusToggle("paused", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                checked={exportStatusSelection.paused}
+                onChange={(e) => setExportStatusSelection((prev) => ({ ...prev, paused: e.target.checked }))}
+                className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+              />
               <span>Paused</span>
             </label>
             <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-              <input type="checkbox" checked={areAllStatusesSelected} onChange={(e) => onAllStatusesToggle(e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                checked={Object.values(exportStatusSelection).every(Boolean)}
+                onChange={(e) =>
+                  setExportStatusSelection({
+                    active: e.target.checked,
+                    onboarding: e.target.checked,
+                    "engagement only": e.target.checked,
+                    paused: e.target.checked,
+                  })
+                }
+                className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+              />
               <span>All</span>
             </label>
           </div>
