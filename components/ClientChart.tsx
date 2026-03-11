@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { format, addDays, startOfYear } from "date-fns";
 
 type Status = "active" | "onboarding" | "engagement only" | "paused";
 
@@ -32,11 +33,22 @@ export default function ClientChart({
   currentPoster,
   firstSeenWeek,
 }: ClientChartProps) {
+  // Helper to get Monday-Sunday date range for a week number
+  const getWeekDateRange = (week: number, year: number = new Date().getFullYear()): string => {
+    let firstMonday = startOfYear(new Date(year, 0, 1));
+    while (firstMonday.getDay() !== 1) {
+      firstMonday = addDays(firstMonday, 1);
+    }
+    const startDate = addDays(firstMonday, (week - 1) * 7);
+    const endDate = addDays(startDate, 6);
+    return `${format(startDate, "MMM d")}-${format(endDate, "MMM d")}`;
+  };
+
   // Convert weekly data to chart format
   const chartData = Object.entries(weeklyData)
     .sort(([a], [b]) => parseInt(a) - parseInt(b))
     .map(([week, count]) => ({
-      week: `Week ${week}`,
+      week: getWeekDateRange(parseInt(week)),
       weekNum: parseInt(week),
       leads: count,
       status: statusByWeek[parseInt(week)] || "active",
