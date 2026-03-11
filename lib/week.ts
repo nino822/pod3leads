@@ -26,6 +26,26 @@ function getWeekDisplayBounds(week: number, year: number) {
   };
 }
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+export function getWeekNumberForDate(date: Date): number {
+  const year = date.getFullYear();
+  const normalized = new Date(year, date.getMonth(), date.getDate());
+  const janFour = new Date(year, 0, 4);
+
+  if (normalized <= janFour) {
+    return 1;
+  }
+
+  const firstMonday = getFirstMondayOfWeekOne(year);
+  if (normalized < firstMonday) {
+    return 1;
+  }
+
+  const diffDays = Math.floor((normalized.getTime() - firstMonday.getTime()) / MS_PER_DAY);
+  return Math.floor(diffDays / 7) + 2;
+}
+
 export function getWeekStartDate(week: number, year: number = new Date().getFullYear()): Date {
   return getWeekDisplayBounds(week, year).startDate;
 }

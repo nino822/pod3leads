@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { getWeekMonth } from "./week";
+import { getWeekMonth, getWeekNumberForDate } from "./week";
 
 export interface Lead {
   client: string;
@@ -49,17 +49,8 @@ const MONTH_SEQUENCE = [
 
 function getCurrentDashboardWeek(date: Date): number {
   // Convert to EST timezone
-  const estDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  
-  // Calculate day of year (1-365/366)
-  const startOfYear = new Date(estDate.getFullYear(), 0, 1);
-  const dayOfYear = Math.floor((estDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  
-  // Calculate week number: Week 1 = Jan 1-7, Week 2 = Jan 8-14, etc.
-  // Week 10 = March 2-8 (days 61-67)
-  const weekNumber = Math.floor((dayOfYear - 1) / 7) + 1;
-  
-  return weekNumber;
+  const estDate = new Date(date.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  return getWeekNumberForDate(estDate);
 }
 
 function cleanPerson(value: unknown): string | undefined {

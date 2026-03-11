@@ -1,7 +1,7 @@
 "use client";
 
 import { WeeklyClientData } from "@/lib/transform";
-import { getWeekDateRange, getWeekMonth } from "@/lib/week";
+import { getWeekDateRange, getWeekMonth, getWeekNumberForDate } from "@/lib/week";
 import { motion } from "framer-motion";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ClientChart from "./ClientChart";
@@ -14,6 +14,12 @@ import {
   exportRowsToPdf,
 } from "@/lib/exportUtils";
 import ExportMenu from "@/components/ExportMenu";
+
+const slugifyClientName = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 
 type ClientStatus = "active" | "engagement only" | "onboarding" | "paused";
 
@@ -85,6 +91,76 @@ export default function WeeklyTable({
   });
   allWeeks.add(1); // Always include Week 1
   const sortedWeeks = Array.from(allWeeks).sort((a, b) => a - b);
+
+  const currentDashboardWeek = useMemo(() => getWeekNumberForDate(new Date()), []);
+  const clientExportWeeks = useMemo(
+    () => Array.from({ length: currentDashboardWeek }, (_, idx) => idx + 1),
+    [currentDashboardWeek]
+  );
+
+  const buildClientExportRows = (client: WeeklyClientData) => {
+    const firstSeenWeek = client.firstSeenWeek ?? 1;
+    return clientExportWeeks.map((week) => {
+      const rowStatus = client.statusByWeek?.[week] ?? client.status;
+      const leadsValue = week < firstSeenWeek ? "-" : client.weeks[week] ?? 0;
+      return {
+        Week: getWeekDateRange(week),
+        "Week #": week,
+        Leads: leadsValue,
+        Status: rowStatus,
+      };
+    });
+  };
+
+  const getClientChartId = (clientName: string) => {
+    const slug = slugifyClientName(clientName);
+    return `client-chart-${slug || "client"}`;
+  };
+
+  const getClientExportBaseName = (clientName: string, suffix: string) => {
+    const slug = slugifyClientName(clientName) || "client";
+    return `${slug}-${suffix}`;
+  };
+
+  const exportClientCsv = (client: WeeklyClientData) => {
+    const rows = buildClientExportRows(client);
+    if (!rows.length) return;
+    exportRowsToCsv(rows, getClientExportBaseName(client.client, "leads-data"));
+  };
+
+  const exportClientExcel = (client: WeeklyClientData) => {
+    const rows = buildClientExportRows(client);
+    if (!rows.length) return;
+    void exportRowsToExcel(rows, getClientExportBaseName(client.client, "leads-data"));
+  };
+
+  const exportClientDataPdf = (client: WeeklyClientData) => {
+    const rows = buildClientExportRows(client);
+    if (!rows.length) return;
+    void exportRowsToPdf(rows, `Client ${client.client} Weekly Leads`, getClientExportBaseName(client.client, "leads-data"));
+  };
+
+  const exportClientChartPng = (clientName: string) => {
+    const chartId = getClientChartId(clientName);
+    void exportElementToPng(chartId, getClientExportBaseName(clientName, "chart"), `Client ${clientName} Weekly Leads Chart`);
+  };
+
+  const exportClientChartPdf = (clientName: string) => {
+    const chartId = getClientChartId(clientName);
+    void exportElementToPdf(chartId, `Client ${clientName} Weekly Leads Chart`, getClientExportBaseName(clientName, "chart"));
+  };
+
+  const exportClientReportPdf = (client: WeeklyClientData) => {
+    const rows = buildClientExportRows(client);
+    if (!rows.length) return;
+    const chartId = getClientChartId(client.client);
+    void exportRowsAndElementToPdf(
+      rows,
+      chartId,
+      `Client ${client.client} Weekly Leads`,
+      getClientExportBaseName(client.client, "report")
+    );
+  };
 
   // Map weeks to months using week date ranges
   const getMonthForWeek = (week: number): string => getWeekMonth(week);
@@ -422,6 +498,7 @@ export default function WeeklyTable({
             {filteredData.map((client, idx) => {
               const displayStatus = getStatus(client.client, client.status);
               const isExpanded = expandedClients.has(client.client);
+              const chartId = getClientChartId(client.client);
               return (
                 <Fragment key={client.client}>
                   <motion.tr
@@ -507,14 +584,60 @@ export default function WeeklyTable({
                       className="bg-gray-50 dark:bg-slate-800"
                     >
                       <td colSpan={sortedWeeks.length + 3}>
-                        <ClientChart
-                          clientName={client.client}
-                          weeklyData={client.weeks}
-                          statusByWeek={client.statusByWeek}
-                          posterByWeek={client.posterByWeek}
-                          currentPoster={client.currentPoster}
-                          firstSeenWeek={client.firstSeenWeek}
-                        />
+                        <div className="mb-3 flex flex-wrap items-center justify-end gap-2 text-xs text-gray-600">
+                          <button
+                            type="button"
+                            onClick={() => exportClientCsv(client)}
+                            className="rounded border border-blue-600 px-3 py-1 text-blue-600 hover:bg-blue-50"
+                          >
+                            Export CSV
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => exportClientExcel(client)}
+                            className="rounded border border-gray-500 px-3 py-1 text-gray-600 hover:bg-gray-100"
+                          >
+                            Export Excel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => exportClientDataPdf(client)}
+                            className="rounded border border-green-600 px-3 py-1 text-green-600 hover:bg-green-50"
+                          >
+                            Export PDF
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => exportClientReportPdf(client)}
+                            className="rounded border border-indigo-600 px-3 py-1 text-indigo-600 hover:bg-indigo-50"
+                          >
+                            Export Report
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => exportClientChartPng(client.client)}
+                            className="rounded border border-purple-600 px-3 py-1 text-purple-600 hover:bg-purple-50"
+                          >
+                            Chart PNG
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => exportClientChartPdf(client.client)}
+                            className="rounded border border-teal-600 px-3 py-1 text-teal-600 hover:bg-teal-50"
+                          >
+                            Chart PDF
+                          </button>
+                        </div>
+                        <div id={chartId}>
+                          <ClientChart
+                            clientName={client.client}
+                            weeklyData={client.weeks}
+                            statusByWeek={client.statusByWeek}
+                            posterByWeek={client.posterByWeek}
+                            currentPoster={client.currentPoster}
+                            firstSeenWeek={client.firstSeenWeek}
+                          />
+                        </div>
                       </td>
                     </motion.tr>
                   )}
