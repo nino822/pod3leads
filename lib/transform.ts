@@ -94,6 +94,14 @@ function parsePosterAndCopywriter(
   return { poster, copywriter };
 }
 
+function parseRowDate(value: unknown): Date | undefined {
+  const text = value?.toString().trim();
+  if (!text) return undefined;
+  const parsed = Date.parse(text);
+  if (Number.isNaN(parsed)) return undefined;
+  return new Date(parsed);
+}
+
 export function parseSheetData(rows: any[], year: number = new Date().getFullYear()): Lead[] {
   if (!rows || rows.length < 2) return [];
 
@@ -137,6 +145,9 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
     const podValue = row[podIndex]?.toString().trim();
     const statusValue = row[statusIndex]?.toString().trim().toLowerCase() || "active";
     const weeklyTotal = parseInt(row[weeklyTotalIndex]) || 0;
+    const rowDate = parseRowDate(row[0]);
+    const inferredWeek = rowDate ? getWeekNumberForDate(rowDate) : currentWeek;
+    const weekNumber = inferredWeek || currentWeek;
 
     // Skip empty rows or rows without data
     if (!clientName || !podValue) continue;
@@ -160,15 +171,15 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
     // Only log first few and every 250th row
     if (i < 20 || i % 250 === 0) {
       console.log(
-        `Week ${currentWeek}, Row ${i}: ${clientName} (${podValue}) Status: "${statusValue}" = ${weeklyTotal} | Poster: ${poster || "-"} | Copywriter: ${copywriter || "-"}`
+        `Week ${weekNumber}, Row ${i}: ${clientName} (${podValue}) Status: "${statusValue}" = ${weeklyTotal} | Poster: ${poster || "-"} | Copywriter: ${copywriter || "-"}`
       );
     }
 
     leads.push({
       client: clientName,
       date: format(new Date(), "yyyy-MM-dd"),
-      week: currentWeek,
-      month: getWeekMonth(currentWeek, year),
+      week: weekNumber,
+      month: getWeekMonth(weekNumber, year),
       year: year, // Use the provided year parameter
       leads: weeklyTotal,
       status,
