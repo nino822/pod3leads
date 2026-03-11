@@ -80,11 +80,11 @@ export async function GET(request: NextRequest) {
     console.log(`Using sheet range for year ${year}: ${selectedRange}`);
 
     // Parse and transform data
-    const leads = parseSheetData(sheetData, year);
+    const { leads, monthlyLeads } = parseSheetData(sheetData, year);
     const currentWeek = getCurrentDashboardWeek(new Date());
     const weeklyByClient = getWeeklyDataByClient(leads);
-    const podStats = calculatePodStats(leads);
-    const monthlyTotals = getMonthlyTotals(leads);
+    const podStats = calculatePodStats(leads, monthlyLeads);
+    const monthlyTotals = getMonthlyTotals(leads, monthlyLeads);
     const teamPerformance = getTeamPerformance(leads);
     const atRiskAccounts = getAtRiskAccounts(leads);
 

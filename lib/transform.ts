@@ -32,6 +32,13 @@ export interface MonthlyTotal {
   activeClients: number;
 }
 
+export type MonthlyLeadsMap = Map<string, Map<string, number>>;
+
+export interface ParsedSheetResult {
+  leads: Lead[];
+  monthlyLeads: MonthlyLeadsMap;
+}
+
 const MONTH_SEQUENCE = [
   "January",
   "February",
@@ -102,10 +109,23 @@ function parseRowDate(value: unknown): Date | undefined {
   return new Date(parsed);
 }
 
-export function parseSheetData(rows: any[], year: number = new Date().getFullYear()): Lead[] {
-  if (!rows || rows.length < 2) return [];
+export function parseSheetData(
+  rows: any[],
+  year: number = new Date().getFullYear()
+): ParsedSheetResult {
+  if (!rows || rows.length < 2) {
+    return { leads: [], monthlyLeads: new Map() };
+  }
 
   const leads: Lead[] = [];
+  const monthlyLeads: MonthlyLeadsMap = new Map();
+
+  const addMonthlyLead = (clientName: string, monthLabel: string, value: number) => {
+    if (value <= 0) return;
+    const clientMap = monthlyLeads.get(clientName) || new Map<string, number>();
+    clientMap.set(monthLabel, (clientMap.get(monthLabel) || 0) + value);
+    monthlyLeads.set(clientName, clientMap);
+  };
   const clientIndex = 1; // Column B
   const posterIndex = 2; // Column C
   const copywriterIndex = 3; // Column D
@@ -230,7 +250,7 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
       );
     }
 
-    leads.push({
+    const leadRecord: Lead = {
       client: clientName,
       date: format(new Date(), "yyyy-MM-dd"),
       week: weekNumber,
@@ -240,7 +260,16 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
       status,
       poster,
       copywriter,
+    };
+
+    currentHeaderDates.forEach((column) => {
+      const value = parseInt(row[column.index]) || 0;
+      if (value <= 0) return;
+      const monthLabel = format(column.date, "MMMM");
+      addMonthlyLead(clientName, monthLabel, value);
     });
+
+    leads.push(leadRecord);
   }
 
   console.log(`✓ Parsed ${leads.length} leads from Pod 3`);
@@ -253,7 +282,7 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
   });
   console.log("Status breakdown:", Object.fromEntries(statusCounts));
   
-  return leads;
+  return { leads, monthlyLeads };
 }
 
   function isPod3Value(value: string): boolean {
@@ -305,7 +334,7 @@ export function aggregateByMonthly(leads: Lead[]): Map<string, AggregatedLead> {
   return aggregated;
 }
 
-export function calculatePodStats(leads: Lead[]): PodStats {
+export function calculatePodStats(leads: Lead[], monthlyLeads?: MonthlyLeadsMap): PodStats {
   if (!leads.length) {
     return {
       weekly: 0,
@@ -346,10 +375,19 @@ export function calculatePodStats(leads: Lead[]): PodStats {
     if (lead.week === targetWeek) {
       weeklyTotal += lead.leads;
     }
-    if (lead.month === currentMonth) {
-      monthlyTotal += lead.leads;
-    }
   });
+
+  if (monthlyLeads && monthlyLeads.size > 0) {
+    monthlyLeads.forEach((clientMap) => {
+      monthlyTotal += clientMap.get(currentMonth) || 0;
+    });
+  } else {
+    leads.forEach((lead) => {
+      if (lead.month === currentMonth) {
+        monthlyTotal += lead.leads;
+      }
+    });
+  }
 
   return {
     weekly: weeklyTotal,
@@ -358,18 +396,35 @@ export function calculatePodStats(leads: Lead[]): PodStats {
   };
 }
 
-export function getMonthlyTotals(leads: Lead[]): MonthlyTotal[] {
+export function getMonthlyTotals(
+  leads: Lead[],
+  monthlyLeads?: MonthlyLeadsMap
+): MonthlyTotal[] {
   const monthTotals = new Map<string, { total: number }>();
   const monthlyWeekClientSets = new Map<string, Map<number, Set<string>>>();
 
+  if (monthlyLeads && monthlyLeads.size > 0) {
+    monthlyLeads.forEach((clientMap) => {
+      clientMap.forEach((value, month) => {
+        if (!monthTotals.has(month)) {
+          monthTotals.set(month, { total: 0 });
+        }
+        const monthData = monthTotals.get(month)!;
+        monthData.total += value;
+      });
+    });
+  } else {
+    leads.forEach((lead) => {
+      if (!monthTotals.has(lead.month)) {
+        monthTotals.set(lead.month, { total: 0 });
+      }
+
+      const monthData = monthTotals.get(lead.month)!;
+      monthData.total += lead.leads;
+    });
+  }
+
   leads.forEach((lead) => {
-    if (!monthTotals.has(lead.month)) {
-      monthTotals.set(lead.month, { total: 0 });
-    }
-
-    const monthData = monthTotals.get(lead.month)!;
-    monthData.total += lead.leads;
-
     if (lead.status === "active" || lead.status === "engagement only") {
       if (!monthlyWeekClientSets.has(lead.month)) {
         monthlyWeekClientSets.set(lead.month, new Map<number, Set<string>>());
