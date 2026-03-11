@@ -81,6 +81,16 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
   const showAtRiskAccounts = selectedYear !== 2025;
   const [tab, setTab] = useState<RoleTab>("posters");
   const [hideInactiveRecent, setHideInactiveRecent] = useState(false);
+    // Helper to get Monday-Sunday date range for a week number
+    const getWeekDateRange = (week: number, year: number = new Date().getFullYear()): string => {
+      let firstMonday = new Date(year - 1, 11, 28);
+      while (firstMonday.getDay() !== 1) {
+        firstMonday = addDays(firstMonday, 1);
+      }
+      const startDate = addDays(firstMonday, (week - 1) * 7);
+      const endDate = addDays(startDate, 6);
+      return `${format(startDate, "MMM d")}-${format(endDate, "MMM d")}`;
+    };
   const [expandedContributors, setExpandedContributors] = useState<Set<string>>(new Set());
   const [atRiskCriteria, setAtRiskCriteria] = useState({
     minAvgLeadsPerWeek: "",
@@ -673,10 +683,10 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
               <div className="mt-3 h-56 w-full rounded border border-red-100 dark:border-red-900/60 bg-white dark:bg-slate-900 p-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={(account.weeklyTrend || []).map((point) => ({
-                      ...point,
-                      weekLabel: `W${point.week}`,
-                    }))}
+                      data={(account.weeklyTrend || []).map((point) => ({
+                        ...point,
+                        weekLabel: getWeekDateRange(point.week),
+                      }))}
                     margin={{ top: 6, right: 8, left: -8, bottom: 2 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />

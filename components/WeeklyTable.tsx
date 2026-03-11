@@ -87,15 +87,11 @@ export default function WeeklyTable({
 
   const sortedWeeks = Array.from(allWeeks).sort((a, b) => a - b);
 
-  // Map weeks to months (Week 1-5 = January, Week 6-9 = February, Week 10-13 = March)
-  const getMonthForWeek = (week: number): string => { 
-    if (week <= 5) return "January";
-    if (week <= 9) return "February";
-    if (week <= 13) return "March";
-    if (week <= 17) return "April";
-    if (week <= 22) return "May";
-    if (week <= 26) return "June";
-    return `Week ${week}`;
+  // Map weeks to months using week date ranges
+  const getMonthForWeek = (week: number): string => {
+    const range = getWeekDateRange(week);
+    const month = range.split("-")[0].split(" ")[0];
+    return month;
   };
 
   // Helper to get Monday-Sunday date range for a week number
