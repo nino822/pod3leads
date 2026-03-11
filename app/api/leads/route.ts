@@ -11,6 +11,7 @@ import {
   getMonthlyTotals,
   getTeamPerformance,
   getAtRiskAccounts,
+  getCurrentDashboardWeek,
 } from "@/lib/transform";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
 
     // Parse and transform data
     const leads = parseSheetData(sheetData, year);
+    const currentWeek = getCurrentDashboardWeek(new Date());
     const weeklyByClient = getWeeklyDataByClient(leads);
     const podStats = calculatePodStats(leads);
     const monthlyTotals = getMonthlyTotals(leads);
@@ -95,6 +97,7 @@ export async function GET(request: NextRequest) {
         teamPerformance,
         atRiskAccounts,
         lastUpdated: new Date().toISOString(),
+        currentWeek,
       },
       {
         headers: {

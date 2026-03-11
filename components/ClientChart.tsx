@@ -23,6 +23,7 @@ interface ClientChartProps {
   posterByWeek?: Record<number, string>;
   currentPoster?: string;
   firstSeenWeek?: number;
+  currentWeek?: number;
 }
 
 export default function ClientChart({
@@ -32,9 +33,14 @@ export default function ClientChart({
   posterByWeek = {},
   currentPoster,
   firstSeenWeek,
+  currentWeek,
 }: ClientChartProps) {
   // Convert weekly data to chart format
   const chartData = Object.entries(weeklyData)
+    .filter(([weekStr]) => {
+      const weekNum = parseInt(weekStr, 10);
+      return currentWeek === undefined || weekNum <= currentWeek;
+    })
     .sort(([a], [b]) => parseInt(a) - parseInt(b))
     .map(([week, count]) => ({
       week: getWeekDateRange(parseInt(week)),

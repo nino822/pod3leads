@@ -94,6 +94,7 @@ interface PodData {
       status: "active" | "onboarding" | "engagement only" | "paused";
     }[];
   }[];
+  currentWeek: number;
 }
 
 export default function Dashboard() {
@@ -608,15 +609,16 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <MonthlyTotals
-              totals={data.monthlyTotals}
-              weeklyData={data.weeklyData}
-              currentYear={filters.year}
-              selectedYear={filters.year}
-              onYearChange={handleYearChange}
-              onRefresh={fetchLeads}
-              refreshing={loading}
-            />
+        <MonthlyTotals
+          totals={data.monthlyTotals}
+          weeklyData={data.weeklyData}
+          currentWeek={data.currentWeek}
+          currentYear={filters.year}
+          selectedYear={filters.year}
+          onYearChange={handleYearChange}
+          onRefresh={fetchLeads}
+          refreshing={loading}
+        />
           </motion.div>
         )}
 
@@ -648,6 +650,7 @@ export default function Dashboard() {
               areAllStatusesSelected={areAllStatusesSelected}
               onStatusToggle={handleStatusToggle}
               onAllStatusesToggle={handleAllStatusesToggle}
+              currentWeek={data.currentWeek}
             />
           </motion.div>
         )}

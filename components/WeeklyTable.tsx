@@ -1,7 +1,7 @@
 "use client";
 
 import { WeeklyClientData } from "@/lib/transform";
-import { getWeekDateRange, getWeekMonth, getWeekNumberForDate } from "@/lib/week";
+import { getWeekDateRange, getWeekMonth } from "@/lib/week";
 import { motion } from "framer-motion";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ClientChart from "./ClientChart";
@@ -29,6 +29,7 @@ interface WeeklyTableProps {
   areAllStatusesSelected: boolean;
   onStatusToggle: (status: ClientStatus, checked: boolean) => void;
   onAllStatusesToggle: (checked: boolean) => void;
+  currentWeek: number;
 }
 
 export default function WeeklyTable({
@@ -37,6 +38,7 @@ export default function WeeklyTable({
   areAllStatusesSelected,
   onStatusToggle,
   onAllStatusesToggle,
+  currentWeek,
 }: WeeklyTableProps) {
   const [statusOverrides, setStatusOverrides] = useState<Record<string, "active" | "onboarding" | "engagement only" | "paused">>({});
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>("All Months");
@@ -82,21 +84,9 @@ export default function WeeklyTable({
     setExpandedClients(newExpanded);
   };
 
-  // Get all weeks across all clients, always include Week 1 (Jan 1–4)
-  const allWeeks = new Set<number>();
-  data.forEach((client) => {
-    Object.keys(client.weeks).forEach((week) => {
-      allWeeks.add(parseInt(week));
-    });
-  });
-  allWeeks.add(1); // Always include Week 1
-  const sortedWeeks = Array.from(allWeeks).sort((a, b) => a - b);
-
-  const currentDashboardWeek = useMemo(() => getWeekNumberForDate(new Date()), []);
-  const clientExportWeeks = useMemo(
-    () => Array.from({ length: currentDashboardWeek }, (_, idx) => idx + 1),
-    [currentDashboardWeek]
-  );
+  const normalizedCurrentWeek = Math.max(1, Math.floor(currentWeek ?? 1));
+  const sortedWeeks = Array.from({ length: normalizedCurrentWeek }, (_, idx) => idx + 1);
+  const clientExportWeeks = sortedWeeks;
 
   const buildClientExportRows = (client: WeeklyClientData) => {
     const firstSeenWeek = client.firstSeenWeek ?? 1;
@@ -219,6 +209,7 @@ export default function WeeklyTable({
     let clientTotal = 0;
     Object.entries(client.weeks).forEach(([week, count]) => {
       const weekNum = parseInt(week);
+      if (weekNum > normalizedCurrentWeek) return;
       clientTotal += count;
       weekTotals.set(weekNum, (weekTotals.get(weekNum) || 0) + count);
     });
@@ -607,6 +598,7 @@ export default function WeeklyTable({
                             posterByWeek={client.posterByWeek}
                             currentPoster={client.currentPoster}
                             firstSeenWeek={client.firstSeenWeek}
+                            currentWeek={normalizedCurrentWeek}
                           />
                         </div>
                       </td>

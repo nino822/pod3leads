@@ -44,6 +44,7 @@ interface ChartPoint {
 interface MonthlyTotalsProps {
   totals: MonthlyTotal[];
   weeklyData: WeeklyClientData[];
+  currentWeek?: number;
   currentYear?: number;
   selectedYear: number;
   onYearChange: (year: number) => void;
@@ -66,7 +67,10 @@ const monthShort: Record<string, string> = {
   December: "Dec",
 };
 
-function aggregateWeeklyFromWeeklyData(weeklyData: WeeklyClientData[]): ChartPoint[] {
+function aggregateWeeklyFromWeeklyData(
+  weeklyData: WeeklyClientData[],
+  maxWeek?: number
+): ChartPoint[] {
   const weekTotals = new Map<number, number>();
   const weeklyClientSets = new Map<number, Set<string>>();
 
@@ -74,6 +78,7 @@ function aggregateWeeklyFromWeeklyData(weeklyData: WeeklyClientData[]): ChartPoi
     Object.entries(client.weeks).forEach(([weekKey, leads]) => {
       const week = Number.parseInt(weekKey, 10);
       if (!Number.isFinite(week)) return;
+      if (typeof maxWeek === "number" && week > maxWeek) return;
 
       weekTotals.set(week, (weekTotals.get(week) || 0) + (leads || 0));
 
@@ -88,6 +93,7 @@ function aggregateWeeklyFromWeeklyData(weeklyData: WeeklyClientData[]): ChartPoi
   });
 
   return Array.from(weekTotals.keys())
+    .filter((week) => typeof maxWeek !== "number" || week <= maxWeek)
     .sort((a, b) => a - b)
     .map((week) => ({
       label: getWeekDateRange(week),
@@ -104,6 +110,7 @@ export default function MonthlyTotals({
   onYearChange,
   onRefresh,
   refreshing,
+  currentWeek,
 }: MonthlyTotalsProps) {
   const [showActiveClients, setShowActiveClients] = useState(false);
   const [showAllYears, setShowAllYears] = useState(false);
@@ -148,7 +155,7 @@ export default function MonthlyTotals({
     }
 
     if (effectiveGraphMode === "weekly") {
-      return aggregateWeeklyFromWeeklyData(weeklyData);
+      return aggregateWeeklyFromWeeklyData(weeklyData, currentWeek);
     }
 
     return totals.map((item) => ({

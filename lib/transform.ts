@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { getWeekMonth, getWeekNumberForDate } from "./week";
+import { getWeekMonth, getWeekNumberForDate, getWeekStartDate, getWeekEndDate } from "./week";
 
 export interface Lead {
   client: string;
@@ -47,7 +47,7 @@ const MONTH_SEQUENCE = [
   "December",
 ] as const;
 
-function getCurrentDashboardWeek(date: Date): number {
+export function getCurrentDashboardWeek(date: Date): number {
   // Convert to EST timezone
   const estDate = new Date(date.toLocaleString("en-US", { timeZone: "America/New_York" }));
   return getWeekNumberForDate(estDate);
@@ -115,6 +115,7 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
 
   let currentWeek = 0; // Start at 0, increment when we see header
   let foundFirstHeader = false;
+  let currentHeaderDates: Array<{ index: number; date: Date }> = [];
 
   console.log(`Processing ${rows.length} rows of data for year ${year}`);
 
@@ -131,6 +132,23 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
         currentWeek++; // Subsequent headers increment the week
       }
       console.log(`Found header row at ${i} for Week ${currentWeek}`);
+      const headerDates: Array<{ index: number; date: Date }> = [];
+      let foundDate = false;
+      for (let col = 9; col < row.length; col++) {
+        const raw = row[col]?.toString().trim();
+        if (!raw) {
+          if (foundDate) break;
+          continue;
+        }
+        const parsed = Date.parse(raw);
+        if (Number.isNaN(parsed)) {
+          if (foundDate) break;
+          continue;
+        }
+        headerDates.push({ index: col, date: new Date(parsed) });
+        foundDate = true;
+      }
+      currentHeaderDates = headerDates;
       continue;
     }
 
@@ -149,6 +167,15 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
     const rowDate = parseRowDate(row[0]);
     const inferredWeek = rowDate ? getWeekNumberForDate(rowDate) : currentWeek;
     const weekNumber = inferredWeek || currentWeek;
+    const weekStart = getWeekStartDate(weekNumber, year);
+    const weekEnd = getWeekEndDate(weekNumber, year);
+    const relevantDateSum = currentHeaderDates.reduce((sum, column) => {
+      if (column.date >= weekStart && column.date <= weekEnd) {
+        return sum + (parseInt(row[column.index]) || 0);
+      }
+      return sum;
+    }, 0);
+    const weeklyLeads = currentHeaderDates.length ? relevantDateSum : weeklyTotal;
 
     // Skip empty rows or rows without data
     if (!clientName || !podValue) continue;
@@ -172,7 +199,7 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
     // Only log first few and every 250th row
     if (i < 20 || i % 250 === 0) {
       console.log(
-        `Week ${weekNumber}, Row ${i}: ${clientName} (${podValue}) Status: "${statusValue}" = ${weeklyTotal} | Poster: ${poster || "-"} | Copywriter: ${copywriter || "-"}`
+        `Week ${weekNumber}, Row ${i}: ${clientName} (${podValue}) Status: "${statusValue}" = ${weeklyLeads} | Poster: ${poster || "-"} | Copywriter: ${copywriter || "-"}`
       );
     }
 
@@ -182,7 +209,7 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
       week: weekNumber,
       month: getWeekMonth(weekNumber, year),
       year: year, // Use the provided year parameter
-      leads: weeklyTotal,
+      leads: weeklyLeads,
       status,
       poster,
       copywriter,
@@ -262,9 +289,14 @@ export function calculatePodStats(leads: Lead[]): PodStats {
 
   const currentDate = new Date();
   const currentMonth = format(currentDate, "MMMM");
+  const currentDashboardWeek = getCurrentDashboardWeek(currentDate);
   const availableWeeks = new Set(leads.map((lead) => lead.week));
-  // Use the max available week from sheet data (shows latest week's data)
-  const targetWeek = Math.max(...Array.from(availableWeeks));
+  const maxAvailableWeek =
+    availableWeeks.size > 0 ? Math.max(...Array.from(availableWeeks)) : 0;
+  const targetWeek =
+    maxAvailableWeek > 0
+      ? Math.min(maxAvailableWeek, currentDashboardWeek)
+      : currentDashboardWeek;
 
   let weeklyTotal = 0;
   let monthlyTotal = 0;
