@@ -169,7 +169,7 @@ export async function exportElementToPdf(elementId: string, title: string, baseN
   const margin = 10;
   const titleHeight = 8;
 
-  pdf.setFontSize(12);
+  pdf.setFontSize(14);
   pdf.text(title, margin, margin);
 
   // Calculate available space
@@ -185,31 +185,18 @@ export async function exportElementToPdf(elementId: string, title: string, baseN
   const pagesNeeded = Math.ceil(renderHeight / availableHeight);
 
   if (pagesNeeded > 1) {
-    // Multi-page: render height fills one page, width stays max
     renderHeight = availableHeight;
     renderWidth = renderHeight * imageRatio;
-
-    // Calculate how many vertical sections we need
-    const sectionHeight = availableHeight;
-    const totalSections = Math.ceil(image.height / (image.height / pagesNeeded));
-
     for (let page = 0; page < pagesNeeded; page++) {
       if (page > 0) {
         pdf.addPage();
-        pdf.setFontSize(10);
+        pdf.setFontSize(12);
         pdf.text(`${title} (continued)`, margin, margin);
       }
-
-      const srcY = (page * image.height) / pagesNeeded;
-      const srcHeight = image.height / pagesNeeded;
       const renderY = margin + (page === 0 ? titleHeight : 0);
-
-      // For now, render full image on each page (jsPDF limitation)
-      // A better approach would require canvas manipulation
       pdf.addImage(image.dataUrl, "PNG", margin, renderY, renderWidth, renderHeight);
     }
   } else {
-    // Single page: scale to fit
     if (renderHeight > availableHeight) {
       renderHeight = availableHeight;
       renderWidth = renderHeight * imageRatio;
@@ -231,18 +218,18 @@ export async function exportRowsToPdf(rows: ExportRow[], title: string, baseName
 
   const margin = 10;
   const usableWidth = pageWidth - margin * 2;
-  const colWidth = Math.max(20, usableWidth / Math.max(keys.length, 1));
+  const colWidth = Math.max(30, usableWidth / Math.max(keys.length, 1)); // wider columns for date ranges
 
   let y = 16;
-  pdf.setFontSize(12);
+  pdf.setFontSize(14);
   pdf.text(title, margin, y);
   y += 8;
 
   const drawHeader = () => {
-    pdf.setFontSize(9);
+    pdf.setFontSize(10);
     keys.forEach((key, idx) => {
       const x = margin + idx * colWidth;
-      pdf.text(key.slice(0, 18), x, y);
+      pdf.text(key.slice(0, 24), x, y); // allow longer date range labels
     });
     y += 5;
     pdf.line(margin, y - 3, pageWidth - margin, y - 3);
@@ -257,11 +244,11 @@ export async function exportRowsToPdf(rows: ExportRow[], title: string, baseName
       drawHeader();
     }
 
-    pdf.setFontSize(8);
+    pdf.setFontSize(9);
     keys.forEach((key, idx) => {
       const x = margin + idx * colWidth;
       const value = asCell(row[key]);
-      pdf.text(value.slice(0, 18), x, y);
+      pdf.text(value.slice(0, 24), x, y);
     });
     y += 4.5;
   });
@@ -284,7 +271,7 @@ export async function exportRowsAndElementToPdf(
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 10;
     const usableWidth = pageWidth - margin * 2;
-    const colWidth = Math.max(20, usableWidth / Math.max(keys.length, 1));
+    const colWidth = Math.max(30, usableWidth / Math.max(keys.length, 1)); // wider columns for date ranges
 
     let y = 16;
     pdf.setFontSize(12);
@@ -294,7 +281,7 @@ export async function exportRowsAndElementToPdf(
     pdf.setFontSize(9);
     keys.forEach((key, idx) => {
       const x = margin + idx * colWidth;
-      pdf.text(key.slice(0, 18), x, y);
+      pdf.text(key.slice(0, 24), x, y); // allow longer date range labels
     });
     y += 5;
     pdf.line(margin, y - 3, pageWidth - margin, y - 3);
@@ -305,7 +292,7 @@ export async function exportRowsAndElementToPdf(
       keys.forEach((key, idx) => {
         const x = margin + idx * colWidth;
         const value = asCell(row[key]);
-        pdf.text(value.slice(0, 18), x, y);
+        pdf.text(value.slice(0, 24), x, y);
       });
       y += 4.5;
     });
@@ -336,7 +323,8 @@ export async function exportRowsAndElementToPdf(
   pdf.setFontSize(12);
   pdf.text(`${title} - Graph`, margin, margin);
   const graphStartY = margin + 8;
-  pdf.addImage(image.dataUrl, "PNG", (pageWidth - renderWidth) / 2, graphStartY, renderWidth, renderHeight);
+  // Make graph larger and more readable
+  pdf.addImage(image.dataUrl, "PNG", margin, graphStartY, maxWidth, maxHeight);
 
   pdf.save(buildFilename(baseName, "pdf"));
 }
