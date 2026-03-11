@@ -125,13 +125,6 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
     // Check if this is a header row (exact "Client" marker in column B)
     const clientHeaderCell = row[clientIndex]?.toString().trim().toLowerCase();
     if (clientHeaderCell === "client") {
-      if (!foundFirstHeader) {
-        foundFirstHeader = true;
-        currentWeek = 1; // First header = Week 1
-      } else {
-        currentWeek++; // Subsequent headers increment the week
-      }
-      console.log(`Found header row at ${i} for Week ${currentWeek}`);
       const headerDates: Array<{ index: number; date: Date }> = [];
       let foundDate = false;
       for (let col = 9; col < row.length; col++) {
@@ -149,6 +142,16 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
         foundDate = true;
       }
       currentHeaderDates = headerDates;
+      if (headerDates.length === 0) {
+        continue;
+      }
+      if (!foundFirstHeader) {
+        foundFirstHeader = true;
+        currentWeek = 1; // First header = Week 1
+      } else {
+        currentWeek++; // Subsequent headers increment the week
+      }
+      console.log(`Found header row at ${i} for Week ${currentWeek}`);
       continue;
     }
 
