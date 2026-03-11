@@ -169,13 +169,30 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
     const weekNumber = inferredWeek || currentWeek;
     const weekStart = getWeekStartDate(weekNumber, year);
     const weekEnd = getWeekEndDate(weekNumber, year);
-    const relevantDateSum = currentHeaderDates.reduce((sum, column) => {
-      if (column.date >= weekStart && column.date <= weekEnd) {
-        return sum + (parseInt(row[column.index]) || 0);
-      }
-      return sum;
-    }, 0);
-    const weeklyLeads = currentHeaderDates.length ? relevantDateSum : weeklyTotal;
+    const headerColumnSum = currentHeaderDates.reduce(
+      (sum, column) => sum + (parseInt(row[column.index]) || 0),
+      0
+    );
+
+    const overlappingDates = currentHeaderDates.filter(
+      (column) => column.date >= weekStart && column.date <= weekEnd
+    );
+
+    const overlappingDateSum = overlappingDates.reduce(
+      (sum, column) => sum + (parseInt(row[column.index]) || 0),
+      0
+    );
+
+    let weeklyLeads: number;
+    if (currentHeaderDates.length === 0) {
+      weeklyLeads = weeklyTotal;
+    } else if (overlappingDates.length > 0) {
+      weeklyLeads = overlappingDateSum;
+    } else if (headerColumnSum > 0) {
+      weeklyLeads = headerColumnSum;
+    } else {
+      weeklyLeads = weeklyTotal;
+    }
 
     // Skip empty rows or rows without data
     if (!clientName || !podValue) continue;

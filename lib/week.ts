@@ -2,11 +2,13 @@ import { addDays, format } from "date-fns";
 
 const normalizeWeekNumber = (week: number): number => Math.max(1, Math.floor(week));
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
 function getWeekDisplayBounds(week: number, year: number) {
   const normalizedWeek = normalizeWeekNumber(week);
   if (normalizedWeek === 1) {
     return {
-      startDate: new Date(year, 0, 1),
+      startDate: new Date(year - 1, 11, 29),
       endDate: new Date(year, 0, 4),
     };
   }
@@ -19,18 +21,21 @@ function getWeekDisplayBounds(week: number, year: number) {
   };
 }
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
 export function getWeekNumberForDate(date: Date): number {
-  const year = date.getFullYear();
-  const normalized = new Date(year, date.getMonth(), date.getDate());
-  const janFour = new Date(year, 0, 4);
+  const normalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  let weekYear = normalized.getFullYear();
+  if (normalized.getMonth() === 11 && normalized.getDate() >= 29) {
+    weekYear += 1;
+  }
 
-  if (normalized <= janFour) {
+  const weekOneStart = new Date(weekYear - 1, 11, 29);
+  const weekOneEnd = new Date(weekYear, 0, 4);
+
+  if (normalized >= weekOneStart && normalized <= weekOneEnd) {
     return 1;
   }
 
-  const weekTwoStart = new Date(year, 0, 5);
+  const weekTwoStart = new Date(weekYear, 0, 5);
   if (normalized < weekTwoStart) {
     return 1;
   }
