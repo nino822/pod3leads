@@ -35,7 +35,8 @@ export default function ClientChart({
 }: ClientChartProps) {
   // Helper to get Monday-Sunday date range for a week number
   const getWeekDateRange = (week: number, year: number = new Date().getFullYear()): string => {
-    let firstMonday = startOfYear(new Date(year, 0, 1));
+    // Week 1 starts on the first Monday on/after Dec 28 of the previous year
+    let firstMonday = new Date(year - 1, 11, 28); // Dec 28 of previous year
     while (firstMonday.getDay() !== 1) {
       firstMonday = addDays(firstMonday, 1);
     }
