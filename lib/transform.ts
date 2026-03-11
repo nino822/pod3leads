@@ -147,7 +147,8 @@ export function parseSheetData(
     if (clientHeaderCell === "client") {
       const headerDates: Array<{ index: number; date: Date }> = [];
       let foundDate = false;
-      for (let col = 9; col < row.length; col++) {
+      const maxDateColumn = 15; // Columns J (9) through P (15)
+      for (let col = 9; col <= maxDateColumn && col < row.length; col++) {
         const raw = row[col]?.toString().trim();
         if (!raw) {
           if (foundDate) break;
