@@ -326,84 +326,55 @@ export default function WeeklyTable({
               <span>All</span>
             </label>
           </div>
+          
           <ExportMenu
             options={[
               {
                 label: "Data CSV",
                 key: "client-data-csv",
                 action: () => exportRowsToCsv(exportRows, "client-leads-summary-data"),
-              options={[
-                {
-                  label: (
-                    <div className="flex flex-col gap-2">
-                      <span className="font-semibold text-gray-700 dark:text-slate-300">Export Filter:</span>
-                      <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-                        <input type="checkbox" checked={statusFilters.active} onChange={(e) => onStatusToggle("active", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
-                        <span>Active</span>
-                      </label>
-                      <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-                        <input type="checkbox" checked={statusFilters["engagement only"]} onChange={(e) => onStatusToggle("engagement only", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
-                        <span>Engagement Only</span>
-                      </label>
-                      <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-                        <input type="checkbox" checked={statusFilters.onboarding} onChange={(e) => onStatusToggle("onboarding", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
-                        <span>Onboarding</span>
-                      </label>
-                      <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-                        <input type="checkbox" checked={statusFilters.paused} onChange={(e) => onStatusToggle("paused", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
-                        <span>Paused</span>
-                      </label>
-                      <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
-                        <input type="checkbox" checked={areAllStatusesSelected} onChange={(e) => onAllStatusesToggle(e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
-                        <span>All</span>
-                      </label>
-                    </div>
-                  ),
-                  key: "export-filters-ui",
-                  action: () => {},
-                },
-                {
-                  label: "Data CSV",
-                  key: "client-data-csv",
-                  action: () => exportRowsToCsv(exportRows, "client-leads-summary-data"),
-                },
-                {
-                  label: "Data Excel",
-                  key: "client-data-xlsx",
-                  action: () => exportRowsToExcel(exportRows, "client-leads-summary-data"),
-                },
-                {
-                  label: "Data PDF",
-                  key: "client-data-pdf",
-                  action: () => exportRowsToPdf(exportRows, "Client Leads Summary Data", "client-leads-summary-data"),
-                },
-                {
-                  label: "Graph PNG",
-                  key: "client-graph-png",
-                  action: () => exportElementToPng("client-leads-table-section", "client-leads-summary-chart", "Client Leads Summary Chart"),
-                },
-                {
-                  label: "Graph PDF",
-                  key: "client-graph-pdf",
-                  action: () => exportElementToPdf("client-leads-table-section", "Client Leads Summary Chart", "client-leads-summary-chart"),
-                },
-                {
-                  label: "Data+Graph PDF",
-                  key: "client-both-pdf",
-                  action: () => exportRowsAndElementToPdf(exportRows, "client-leads-table-section", "Client Leads Summary", "client-leads-summary-report"),
-                },
-              ]}
-        ref={topScrollRef}
-        className="fixed z-40 overflow-x-auto overflow-y-hidden rounded border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow"
-        style={{
-          height: "18px",
-          bottom: "12px",
-          left: `${floatingScroll.left}px`,
-          width: `${floatingScroll.width}px`,
-          display: floatingScroll.visible ? "block" : "none",
-        }}
-      >
-        <div ref={scrollTrackRef} style={{ height: "1px" }} />
+              },
+              {
+                label: "Data Excel",
+                key: "client-data-xlsx",
+                action: () => exportRowsToExcel(exportRows, "client-leads-summary-data"),
+              },
+              {
+                label: "Data PDF",
+                key: "client-data-pdf",
+                action: () => exportRowsToPdf(exportRows, "Client Leads Summary Data", "client-leads-summary-data"),
+              },
+              {
+                label: "Graph PNG",
+                key: "client-graph-png",
+                action: () => exportElementToPng("client-leads-table-section", "client-leads-summary-chart", "Client Leads Summary Chart"),
+              },
+              {
+                label: "Graph PDF",
+                key: "client-graph-pdf",
+                action: () => exportElementToPdf("client-leads-table-section", "client-leads-summary-chart", "client-leads-summary-chart"),
+              },
+              {
+                label: "Data+Graph PDF",
+                key: "client-both-pdf",
+                action: () => exportRowsAndElementToPdf(exportRows, "client-leads-table-section", "Client Leads Summary", "client-leads-summary-report"),
+              },
+            ]}
+          />
+        </div>
+        <div
+          ref={topScrollRef}
+          className="fixed z-40 overflow-x-auto overflow-y-hidden rounded border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow"
+          style={{
+            height: "18px",
+            bottom: "12px",
+            left: `${floatingScroll.left}px`,
+            width: `${floatingScroll.width}px`,
+            display: floatingScroll.visible ? "block" : "none",
+          }}
+        >
+          <div ref={scrollTrackRef} style={{ height: "1px" }} />
+        </div>
       </div>
 
       <div 
