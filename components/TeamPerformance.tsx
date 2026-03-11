@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { format, addDays } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import ContributorAverageChart from "./ContributorAverageChart";
 import {
