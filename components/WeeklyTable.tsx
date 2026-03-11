@@ -1,7 +1,7 @@
 "use client";
 
 import { WeeklyClientData } from "@/lib/transform";
-import { format, addDays, startOfYear } from "date-fns";
+import { getWeekDateRange, getWeekMonth } from "@/lib/week";
 import { motion } from "framer-motion";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import ClientChart from "./ClientChart";
@@ -87,28 +87,7 @@ export default function WeeklyTable({
   const sortedWeeks = Array.from(allWeeks).sort((a, b) => a - b);
 
   // Map weeks to months using week date ranges
-  const getMonthForWeek = (week: number): string => {
-    const range = getWeekDateRange(week);
-    const month = range.split("-")[0].split(" ")[0];
-    return month;
-  };
-
-  // Helper to get Monday-Sunday date range for a week number
-  const getWeekDateRange = (week: number, year: number = new Date().getFullYear()): string => {
-    let firstMonday = new Date(year - 1, 11, 28);
-    while (firstMonday.getDay() !== 1) {
-      firstMonday = addDays(firstMonday, 1);
-    }
-    const startDate = addDays(firstMonday, (week - 1) * 7);
-    const endDate = addDays(startDate, 6);
-    // For week 1, show Jan 1–4
-    if (week === 1) {
-      const jan1 = new Date(year, 0, 1);
-      const jan4 = new Date(year, 0, 4);
-      return `${format(jan1, "MMM d")}-${format(jan4, "MMM d")}`;
-    }
-    return `${format(startDate, "MMM d")}-${format(endDate, "MMM d")}`;
-  };
+  const getMonthForWeek = (week: number): string => getWeekMonth(week);
 
   // Group weeks by month for colspan
   const monthGroups: { month: string; weeks: number[]; colspan: number }[] = [];

@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { getWeekMonth } from "./week";
 
 export interface Lead {
   client: string;
@@ -45,34 +46,6 @@ const MONTH_SEQUENCE = [
   "November",
   "December",
 ] as const;
-
-function getMonthForWeek(week: number): string {
-  // Based on 7-day weeks starting Jan 1:
-  // Week 1-5: January (days 1-35)
-  // Week 6-9: February (days 36-63)  
-  // Week 10-13: March (days 64-91)
-  // Week 14-17: April (days 92-119)
-  // Week 18-22: May (days 120-151)
-  // Week 23-26: June (days 152-182)
-  // Week 27-31: July (days 183-217)
-  // Week 32-35: August (days 218-245)
-  // Week 36-39: September (days 246-273)
-  // Week 40-44: October (days 274-308)
-  // Week 45-48: November (days 309-336)
-  // Week 49-53: December (days 337-365/371)
-  if (week <= 5) return "January";
-  if (week <= 9) return "February";
-  if (week <= 13) return "March";
-  if (week <= 17) return "April";
-  if (week <= 22) return "May";
-  if (week <= 26) return "June";
-  if (week <= 31) return "July";
-  if (week <= 35) return "August";
-  if (week <= 39) return "September";
-  if (week <= 44) return "October";
-  if (week <= 48) return "November";
-  return "December";
-}
 
 function getCurrentDashboardWeek(date: Date): number {
   // Convert to EST timezone
@@ -204,7 +177,7 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
       client: clientName,
       date: format(new Date(), "yyyy-MM-dd"),
       week: currentWeek,
-      month: getMonthForWeek(currentWeek),
+      month: getWeekMonth(currentWeek, year),
       year: year, // Use the provided year parameter
       leads: weeklyTotal,
       status,

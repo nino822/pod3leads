@@ -22,6 +22,7 @@ import {
   exportRowsToPdf,
 } from "@/lib/exportUtils";
 import { WeeklyClientData } from "@/lib/transform";
+import { getWeekDateRange } from "@/lib/week";
 import ExportMenu from "@/components/ExportMenu";
 
 type ClientStatus = "active" | "engagement only" | "onboarding" | "paused";
@@ -89,7 +90,7 @@ function aggregateWeeklyFromWeeklyData(weeklyData: WeeklyClientData[]): ChartPoi
   return Array.from(weekTotals.keys())
     .sort((a, b) => a - b)
     .map((week) => ({
-      label: `W${week}`,
+      label: getWeekDateRange(week),
       total: weekTotals.get(week) || 0,
       activeClients: weeklyClientSets.get(week)?.size || 0,
     }));
