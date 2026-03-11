@@ -121,8 +121,9 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     
-    // Check if this is a header row (contains "Client" in column B)
-    if (row[clientIndex]?.toString().toLowerCase().includes("client")) {
+    // Check if this is a header row (exact "Client" marker in column B)
+    const clientHeaderCell = row[clientIndex]?.toString().trim().toLowerCase();
+    if (clientHeaderCell === "client") {
       if (!foundFirstHeader) {
         foundFirstHeader = true;
         currentWeek = 1; // First header = Week 1
