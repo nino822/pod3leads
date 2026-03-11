@@ -188,6 +188,8 @@ export function parseSheetData(rows: any[], year: number = new Date().getFullYea
       weeklyLeads = weeklyTotal;
     } else if (overlappingDates.length > 0) {
       weeklyLeads = overlappingDateSum;
+    } else if (weeklyTotal > 0) {
+      weeklyLeads = weeklyTotal;
     } else if (headerColumnSum > 0) {
       weeklyLeads = headerColumnSum;
     } else {
