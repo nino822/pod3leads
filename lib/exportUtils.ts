@@ -260,71 +260,70 @@ export async function exportRowsAndElementToPdf(
   rows: ExportRow[],
   elementId: string,
   title: string,
-  baseName: string
+  baseName: string,
+  statusFilter?: string[]
 ): Promise<void> {
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 10;
+  const usableWidth = pageWidth - margin * 2;
+  const colWidth = Math.max(30, usableWidth / Math.max(Object.keys(rows[0] || {}).length, 1));
 
-  if (rows.length > 0) {
-    const keys = Object.keys(rows[0]);
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 10;
-    const usableWidth = pageWidth - margin * 2;
-    const colWidth = Math.max(30, usableWidth / Math.max(keys.length, 1)); // wider columns for date ranges
+  // Filter rows by status if provided
+  let filteredRows = rows;
+  if (statusFilter && statusFilter.length > 0) {
+    filteredRows = rows.filter(row => statusFilter.includes(String(row.Status).toLowerCase()));
+  }
 
+  // Paginate: 2 clients per page
+  const clientsPerPage = 2;
+  for (let i = 0; i < filteredRows.length; i += clientsPerPage) {
+    pdf.addPage();
     let y = 16;
-    pdf.setFontSize(12);
+    pdf.setFontSize(14);
     pdf.text(`${title} - Data`, margin, y);
     y += 8;
 
-    pdf.setFontSize(9);
+    // Draw header
+    pdf.setFontSize(10);
+    const keys = Object.keys(filteredRows[0]);
     keys.forEach((key, idx) => {
       const x = margin + idx * colWidth;
-      pdf.text(key.slice(0, 24), x, y); // allow longer date range labels
+      pdf.text(key.slice(0, 24), x, y);
     });
     y += 5;
     pdf.line(margin, y - 3, pageWidth - margin, y - 3);
 
-    rows.slice(0, 40).forEach((row) => {
-      if (y > pageHeight - 10) return;
-      pdf.setFontSize(8);
+    // Draw up to 2 clients
+    for (let j = 0; j < clientsPerPage && i + j < filteredRows.length; j++) {
+      const row = filteredRows[i + j];
+      pdf.setFontSize(9);
       keys.forEach((key, idx) => {
         const x = margin + idx * colWidth;
         const value = asCell(row[key]);
         pdf.text(value.slice(0, 24), x, y);
       });
       y += 4.5;
-    });
-
-    if (rows.length > 40) {
-      pdf.setFontSize(8);
-      pdf.text(`... ${rows.length - 40} more rows omitted from PDF preview`, margin, y + 4);
     }
+
+    // Render graph for these clients
+    const element = getElementOrThrow(elementId);
+    const image = await captureElementFullContent(element);
+    const maxWidth = pageWidth - margin * 2;
+    const maxHeight = pageHeight - margin * 2 - 6;
+    const imageRatio = image.width / image.height;
+    let renderWidth = maxWidth;
+    let renderHeight = renderWidth / imageRatio;
+    if (renderHeight > maxHeight) {
+      renderHeight = maxHeight;
+      renderWidth = renderHeight * imageRatio;
+    }
+    pdf.setFontSize(12);
+    pdf.text(`${title} - Graph`, margin, y + 8);
+    pdf.addImage(image.dataUrl, "PNG", margin, y + 16, maxWidth, maxHeight);
   }
-
-  const element = getElementOrThrow(elementId);
-  const image = await captureElementFullContent(element);
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 10;
-  const maxWidth = pageWidth - margin * 2;
-  const maxHeight = pageHeight - margin * 2 - 6;
-  const imageRatio = image.width / image.height;
-
-  let renderWidth = maxWidth;
-  let renderHeight = renderWidth / imageRatio;
-  if (renderHeight > maxHeight) {
-    renderHeight = maxHeight;
-    renderWidth = renderHeight * imageRatio;
-  }
-
-  pdf.addPage();
-  pdf.setFontSize(12);
-  pdf.text(`${title} - Graph`, margin, margin);
-  const graphStartY = margin + 8;
-  // Make graph larger and more readable
-  pdf.addImage(image.dataUrl, "PNG", margin, graphStartY, maxWidth, maxHeight);
 
   pdf.save(buildFilename(baseName, "pdf"));
 }

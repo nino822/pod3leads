@@ -181,7 +181,7 @@ export default function WeeklyTable({
         };
 
         sortedWeeks.forEach((week) => {
-          row[`Week ${week}`] = client.weeks[week] ?? 0;
+          row[getWeekDateRange(week)] = client.weeks[week] ?? 0;
         });
 
         row.Total = clientTotals.get(client.client) || 0;
@@ -324,6 +324,29 @@ export default function WeeklyTable({
             />
             <span>Paused</span>
           </label>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="font-semibold text-gray-700 dark:text-slate-300">Export Filter:</span>
+            <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
+              <input type="checkbox" checked={statusFilters.active} onChange={(e) => onStatusToggle("active", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <span>Active</span>
+            </label>
+            <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
+              <input type="checkbox" checked={statusFilters["engagement only"]} onChange={(e) => onStatusToggle("engagement only", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <span>Engagement Only</span>
+            </label>
+            <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
+              <input type="checkbox" checked={statusFilters.onboarding} onChange={(e) => onStatusToggle("onboarding", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <span>Onboarding</span>
+            </label>
+            <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
+              <input type="checkbox" checked={statusFilters.paused} onChange={(e) => onStatusToggle("paused", e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <span>Paused</span>
+            </label>
+            <label className="inline-flex items-center gap-2 text-gray-700 dark:text-slate-300">
+              <input type="checkbox" checked={areAllStatusesSelected} onChange={(e) => onAllStatusesToggle(e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+              <span>All</span>
+            </label>
+          </div>
           <ExportMenu
             options={[
               {
