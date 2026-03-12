@@ -17,6 +17,7 @@ import {
 import ExportMenu from "@/components/ExportMenu";
 import {
   CartesianGrid,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -26,6 +27,12 @@ import {
 } from "recharts";
 
 type RoleTab = "posters" | "copywriters";
+
+const slugifyClientName = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 
 type ContributorPerformance = {
   name: string;
@@ -67,6 +74,13 @@ type AtRiskAccount = {
     leads: number;
     status: "active" | "onboarding" | "engagement only" | "paused";
   }>;
+};
+
+type LineConfig = {
+  key: string;
+  label: string;
+  clientName: string;
+  color: string;
 };
 
 interface TeamPerformanceProps {
@@ -214,11 +228,11 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
     [tableRows]
   );
 
-  const filteredAtRiskAccounts = useMemo(() => {
-    const minParsed = Number.parseFloat(atRiskCriteria.minAvgLeadsPerWeek);
-    const minAvg = Number.isFinite(minParsed) ? Math.max(0, minParsed) : 0;
+    const filteredAtRiskAccounts = useMemo(() => {
+      const minParsed = Number.parseFloat(atRiskCriteria.minAvgLeadsPerWeek);
+      const minAvg = Number.isFinite(minParsed) ? Math.max(0, minParsed) : 0;
 
-    return atRiskAccounts.filter((account) => {
+      return atRiskAccounts.filter((account) => {
       const recentAvg = Number(account.recentAvg || 0);
       const previousAvg = Number(account.previousAvg || 0);
       const inRange = recentAvg >= minAvg;
@@ -230,11 +244,57 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
 
       return inRange;
     });
-  }, [
-    atRiskAccounts,
-    atRiskCriteria.minAvgLeadsPerWeek,
-    atRiskCriteria.onlyLowerThanPrevious,
-  ]);
+    }, [
+      atRiskAccounts,
+      atRiskCriteria.minAvgLeadsPerWeek,
+      atRiskCriteria.onlyLowerThanPrevious,
+    ]);
+
+    const resolvedYear = selectedYear ?? new Date().getFullYear();
+    const linePalette = ["#2563eb", "#c026d3", "#6d28d9", "#fb7185", "#f97316", "#059669", "#0ea5e9", "#7c3aed", "#facc15"];
+    const weeklyTrendMap = useMemo(() => {
+      const map = new Map<string, Map<number, number>>();
+      filteredAtRiskAccounts.forEach((account) => {
+        const inner = new Map<number, number>();
+        account.weeklyTrend.forEach((point) => {
+          inner.set(point.week, point.leads);
+        });
+        map.set(account.client, inner);
+      });
+      return map;
+    }, [filteredAtRiskAccounts]);
+
+    const weekSeries = useMemo(() => {
+      const weeks = new Set<number>();
+      filteredAtRiskAccounts.forEach((account) => {
+        account.weeklyTrend.forEach((point) => weeks.add(point.week));
+      });
+      return Array.from(weeks).sort((a, b) => a - b);
+    }, [filteredAtRiskAccounts]);
+
+    const lineConfigs: LineConfig[] = useMemo(
+      () =>
+        filteredAtRiskAccounts.map((account, index) => ({
+          key: `line-${slugifyClientName(account.client) || `client-${index}`}`,
+          label: account.client,
+          clientName: account.client,
+          color: linePalette[index % linePalette.length],
+        })),
+      [filteredAtRiskAccounts]
+    );
+
+    const atRiskChartData = useMemo(() => {
+      return weekSeries.map((week) => {
+        const point: Record<string, number | string> = {
+          weekLabel: getWeekDateRange(week, resolvedYear),
+        };
+        lineConfigs.forEach((config) => {
+          const value = weeklyTrendMap.get(config.clientName)?.get(week) ?? 0;
+          point[config.key] = value;
+        });
+        return point;
+      });
+    }, [weekSeries, lineConfigs, weeklyTrendMap, resolvedYear]);
 
   const handleCriteriaNumberChange = (
     key: "minAvgLeadsPerWeek",
@@ -654,7 +714,42 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
             <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
           </div>
         </div>
-        <div id="at-risk-accounts-chart" className="max-h-[480px] overflow-auto pr-1">
+        <div id="at-risk-accounts-chart" className="space-y-4">
+          {atRiskChartData.length > 0 && (
+            <div className="h-64 w-full rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={atRiskChartData}
+                  margin={{ top: 10, right: 16, left: -8, bottom: 26 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="weekLabel"
+                    tick={{ fontSize: 9 }}
+                    angle={-45}
+                    textAnchor="end"
+                    interval={0}
+                    height={40}
+                  />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12, marginTop: 4 }} />
+                  {lineConfigs.map((config) => (
+                    <Line
+                      key={config.key}
+                      type="monotone"
+                      dataKey={config.key}
+                      stroke={config.color}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 5 }}
+                      name={config.label}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
           {filteredAtRiskAccounts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredAtRiskAccounts.map((account) => (
