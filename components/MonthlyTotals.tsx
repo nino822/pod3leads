@@ -41,6 +41,56 @@ interface ChartPoint {
   activeClients: number;
 }
 
+interface WeeklyLeadSummary {
+  week: number;
+  label: string;
+  totalLeads: number;
+  cappedLeads: number;
+  activeClients: number;
+  year: number;
+}
+
+function computeWeeklyLeadSummaries(
+  weeklyData: WeeklyClientData[],
+  maxWeek?: number,
+  year?: number
+): WeeklyLeadSummary[] {
+  const aggregates = new Map<number, { totalLeads: number; cappedLeads: number; clients: Set<string> }>();
+
+  weeklyData.forEach((client) => {
+    Object.entries(client.weeks).forEach(([weekKey, leads = 0]) => {
+      const week = Number.parseInt(weekKey, 10);
+      if (!Number.isFinite(week)) return;
+      if (typeof maxWeek === "number" && week > maxWeek) return;
+
+      const statusAtWeek = client.statusByWeek?.[week] ?? client.status;
+      if (statusAtWeek === "active" || statusAtWeek === "engagement only") {
+        const entry = aggregates.get(week) ?? {
+          totalLeads: 0,
+          cappedLeads: 0,
+          clients: new Set<string>(),
+        };
+
+        entry.totalLeads += leads;
+        entry.cappedLeads += Math.min(leads, 8);
+        entry.clients.add(client.client);
+        aggregates.set(week, entry);
+      }
+    });
+  });
+
+  return Array.from(aggregates.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([week, { totalLeads, cappedLeads, clients }]) => ({
+      week,
+      label: getWeekDateRange(week, year ?? new Date().getFullYear()),
+      totalLeads,
+      cappedLeads,
+      activeClients: clients.size,
+      year: year ?? new Date().getFullYear(),
+    }));
+}
+
 interface MonthlyTotalsProps {
   totals: MonthlyTotal[];
   weeklyData: WeeklyClientData[];
@@ -175,6 +225,32 @@ export default function MonthlyTotals({
       })),
     [chartData]
   );
+
+  const weeklyLeadSummaries = useMemo(
+    () => computeWeeklyLeadSummaries(weeklyData, currentWeek, selectedYear),
+    [weeklyData, currentWeek, selectedYear]
+  );
+
+  const latestWeekNumber = weeklyLeadSummaries.length
+    ? weeklyLeadSummaries[weeklyLeadSummaries.length - 1].week
+    : undefined;
+  const currentWeekNumber = currentWeek ?? latestWeekNumber;
+  const currentWeekSummary = weeklyLeadSummaries.find((item) => item.week === currentWeekNumber);
+  const historicalSummaries = weeklyLeadSummaries
+    .filter((item) => item.week !== currentWeekNumber)
+    .sort((a, b) => b.week - a.week);
+
+  const formatAverage = (value?: number) =>
+    typeof value === "number" && Number.isFinite(value) ? value.toFixed(1) : "-";
+
+  const currentWeekAvgNoCap =
+    currentWeekSummary && currentWeekSummary.activeClients
+      ? currentWeekSummary.totalLeads / currentWeekSummary.activeClients
+      : undefined;
+  const currentWeekAvgCap =
+    currentWeekSummary && currentWeekSummary.activeClients
+      ? currentWeekSummary.cappedLeads / currentWeekSummary.activeClients
+      : undefined;
 
 
   useEffect(() => {
@@ -385,9 +461,71 @@ export default function MonthlyTotals({
                 Avg active clients: {item.activeClients}
               </p>
             </motion.div>
-          ))}
+              ))}
+            </div>
+          )}
+      
+      <div className="mt-6 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Current week avg (no cap)</p>
+            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">{formatAverage(currentWeekAvgNoCap)}</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1">
+              Active accounts: {currentWeekSummary?.activeClients ?? 0}
+            </p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400">
+              Week: {currentWeekSummary?.label ?? "—"}
+            </p>
+          </div>
+          <div className="rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Current week avg (cap 8 leads/client)</p>
+            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">{formatAverage(currentWeekAvgCap)}</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1">
+              Cap per client: 8 leads
+            </p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400">
+              Active accounts: {currentWeekSummary?.activeClients ?? 0}
+            </p>
+          </div>
         </div>
-      )}
+        <div>
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-2">Previous weekly averages</p>
+          {historicalSummaries.length > 0 ? (
+            <div className="overflow-auto rounded-md border border-gray-200 dark:border-slate-800">
+              <table className="min-w-full text-left text-sm text-gray-600 dark:text-slate-300">
+                <thead className="bg-gray-100 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                  <tr>
+                    <th className="px-3 py-2">Week</th>
+                    <th className="px-3 py-2 text-right">No Cap</th>
+                    <th className="px-3 py-2 text-right">Cap 8</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historicalSummaries.map((item) => {
+                    const noCapAvg =
+                      item.activeClients > 0
+                        ? item.totalLeads / item.activeClients
+                        : undefined;
+                    const capAvg =
+                      item.activeClients > 0
+                        ? item.cappedLeads / item.activeClients
+                        : undefined;
+                    return (
+                      <tr key={item.week} className="border-t border-gray-200 dark:border-slate-800">
+                        <td className="px-3 py-2 text-xs font-medium text-gray-700 dark:text-slate-100">{item.label}</td>
+                        <td className="px-3 py-2 text-right text-base font-semibold text-gray-900 dark:text-slate-100">{formatAverage(noCapAvg)}</td>
+                        <td className="px-3 py-2 text-right text-base font-semibold text-gray-900 dark:text-slate-100">{formatAverage(capAvg)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-slate-400">No previous weekly data available.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
