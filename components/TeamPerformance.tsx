@@ -25,7 +25,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import ClientChart from "./ClientChart";
 import { WeeklyClientData } from "@/lib/transform";
 
 type RoleTab = "posters" | "copywriters";
@@ -768,7 +767,7 @@ export default function TeamPerformance({
             <div>
               <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Low-lead accounts</p>
               <p className="text-xs text-gray-500 dark:text-slate-400">
-                Shows active/engagement clients with no leads for a minimum number of days.
+                Shows active/engagement clients with no leads for a minimum number of days. The "w/d" badge reflects that same consecutive zero-lead stretch (e.g., 11w 77d = 11 weeks / 77 days with no leads).
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-slate-300">
@@ -828,34 +827,23 @@ export default function TeamPerformance({
                     key={account.client}
                     className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 p-3"
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{account.client}</p>
                         <p className="text-xs text-gray-500 dark:text-slate-400">
                           Status: {account.status}
                         </p>
                       </div>
-                      <span className="text-[11px] font-semibold uppercase text-blue-700 dark:text-blue-300">
-                        {account.consecutiveWeeks}w {account.noLeadDays}d
+                      <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+                        No leads {account.noLeadDays} days ({account.consecutiveWeeks} weeks)
                       </span>
                     </div>
                     <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
-                      No leads for {account.noLeadDays} days. Last lead: {lastLeadText}.
+                      Last lead: {lastLeadText}.
                     </p>
-                    <div className="mt-3">
-                      <p className="text-[11px] text-gray-500 dark:text-slate-400 mb-1">Weekly trend</p>
-                      <div className={`${graphHeightClass}`}>
-                        <ClientChart
-                          clientName={account.client}
-                          weeklyData={account.weeklyData.weeks}
-                          statusByWeek={account.weeklyData.statusByWeek}
-                          posterByWeek={account.weeklyData.posterByWeek}
-                          currentPoster={account.weeklyData.currentPoster}
-                          firstSeenWeek={account.weeklyData.firstSeenWeek}
-                          currentWeek={account.latestWeek}
-                          year={selectedYear}
-                        />
-                      </div>
+                    <div className="mt-2 rounded-md border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/60 p-2 text-[11px] text-gray-600 dark:text-gray-300">
+                      <p>Streak: {account.consecutiveWeeks} consecutive zero-lead weeks</p>
+                      <p>Days without leads: {account.noLeadDays}</p>
                     </div>
                   </div>
                 );
