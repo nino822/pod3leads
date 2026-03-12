@@ -128,7 +128,7 @@ export default function TeamPerformance({
     minAvgLeadsPerWeek: "",
     onlyLowerThanPrevious: true,
   });
-  const [minNoLeadDays, setMinNoLeadDays] = useState(3);
+  const [minNoLeadDays, setMinNoLeadDays] = useState(1);
   const [lowLeadStatusFilter, setLowLeadStatusFilter] = useState<Record<ActivityStatus, boolean>>({
     active: true,
     "engagement only": true,
