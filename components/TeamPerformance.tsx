@@ -283,6 +283,19 @@ export default function TeamPerformance({
     ]);
 
     const resolvedYear = selectedYear ?? new Date().getFullYear();
+    const linePalette = [
+      "#2563eb",
+      "#0ea5e9",
+      "#22c55e",
+      "#f97316",
+      "#e11d48",
+      "#a855f7",
+      "#10b981",
+      "#facc15",
+      "#7c3aed",
+      "#ef4444",
+    ];
+
     const weeklyTrendMap = useMemo(() => {
       const map = new Map<string, Map<number, number>>();
       filteredAtRiskAccounts.forEach((account) => {
@@ -309,7 +322,7 @@ export default function TeamPerformance({
           key: `line-${slugifyClientName(account.client) || `client-${index}`}`,
           label: account.client,
           clientName: account.client,
-          color: statusChartColorMap[account.currentStatus] || "#2563eb",
+          color: linePalette[index % linePalette.length],
         })),
       [filteredAtRiskAccounts]
     );
@@ -326,6 +339,26 @@ export default function TeamPerformance({
         return point;
       });
     }, [weekSeries, lineConfigs, weeklyTrendMap, resolvedYear]);
+
+    const latestWeekOnChart = weekSeries.length ? weekSeries[weekSeries.length - 1] : undefined;
+    const previousWeekOnChart = weekSeries.length > 1 ? weekSeries[weekSeries.length - 2] : undefined;
+
+    const avgForWeek = (week?: number) => {
+      if (!week) return 0;
+      let sum = 0;
+      let count = 0;
+      filteredAtRiskAccounts.forEach((account) => {
+        const value = weeklyTrendMap.get(account.client)?.get(week);
+        if (typeof value === "number") {
+          sum += value;
+          count += 1;
+        }
+      });
+      return count > 0 ? sum / count : 0;
+    };
+
+    const avgLatestWeek = avgForWeek(latestWeekOnChart);
+    const avgPreviousWeek = avgForWeek(previousWeekOnChart);
 
   const lowLeadAccounts = useMemo(() => {
     const daysFilter = minNoLeadDays === 0 ? 3 : minNoLeadDays;
@@ -372,12 +405,17 @@ export default function TeamPerformance({
       const trimmedLength = Math.max(0, weekEntries.length - consecutiveWeeks);
       const lastLeadCandidates = weekEntries
         .slice(0, trimmedLength)
+        .filter((entry) => {
+          const statusAtWeek =
+            (client.statusByWeek?.[entry.week] as ActivityStatus | undefined) ?? client.status;
+          return (statusAtWeek === "active" || statusAtWeek === "engagement only") && entry.week >= firstActiveWeek;
+        })
         .reverse();
       const lastLeadEntry =
-        lastLeadCandidates.find((entry) => entry.leads > 0) || weekEntries[0];
+        lastLeadCandidates.find((entry) => entry.leads > 0) || undefined;
       const lastLeadLabel = lastLeadEntry
         ? getWeekDateRange(lastLeadEntry.week, selectedYear ?? new Date().getFullYear())
-        : "N/A";
+        : "No leads since activation";
       const latestLeads = latestEntry.leads;
       if (latestLeads > 0) return;
 
@@ -410,25 +448,12 @@ export default function TeamPerformance({
 
   const atRiskMetrics = useMemo(() => {
     const total = filteredAtRiskAccounts.length;
-    if (total === 0) {
-      return {
-        total,
-        avgCurrentLeadsPerWeek: 0,
-        avgPreviousLeadsPerWeek: 0,
-      };
-    }
-
-    const avgCurrentLeadsPerWeek =
-      filteredAtRiskAccounts.reduce((sum, account) => sum + Number(account.recentAvg || 0), 0) / total;
-    const avgPreviousLeadsPerWeek =
-      filteredAtRiskAccounts.reduce((sum, account) => sum + Number(account.previousAvg || 0), 0) / total;
-
     return {
       total,
-      avgCurrentLeadsPerWeek,
-      avgPreviousLeadsPerWeek,
+      avgCurrentLeadsPerWeek: total > 0 ? avgLatestWeek : 0,
+      avgPreviousLeadsPerWeek: total > 0 ? avgPreviousWeek : 0,
     };
-  }, [filteredAtRiskAccounts]);
+  }, [filteredAtRiskAccounts, avgLatestWeek, avgPreviousWeek]);
 
   const atRiskExportRows = useMemo(
     () =>
@@ -788,8 +813,23 @@ export default function TeamPerformance({
                 </div>
               </div>
             </div>
-        <div id="at-risk-accounts-chart" className="space-y-4 mt-4">
-          <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">At-risk weekly trend (latest data)</p>
+        <div id="at-risk-accounts-chart" className="space-y-3 mt-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">At-risk weekly trend (latest data)</p>
+            {lineConfigs.length > 0 && (
+              <div className="flex flex-wrap gap-3 text-xs font-medium text-gray-700 dark:text-slate-200">
+                {lineConfigs.map((config) => (
+                  <span key={config.key} className="inline-flex items-center gap-1">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: config.color }}
+                    />
+                    {config.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           {atRiskChartData.length > 0 && (
                 <div className="h-64 w-full rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
                   <ResponsiveContainer width="100%" height="100%">
