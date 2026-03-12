@@ -64,7 +64,7 @@ function computeWeeklyLeadSummaries(
       if (typeof maxWeek === "number" && week > maxWeek) return;
 
       const statusAtWeek = client.statusByWeek?.[week] ?? client.status;
-      if (statusAtWeek === "active" || statusAtWeek === "engagement only") {
+      if (statusAtWeek === "active") {
         const entry = aggregates.get(week) ?? {
           totalLeads: 0,
           cappedLeads: 0,
