@@ -121,7 +121,8 @@ export default function Dashboard() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const showKpiCards = filters.year !== 2025;
+  const currentYear = new Date().getFullYear();
+  const showKpiCards = filters.year === currentYear;
 
   const filteredWeeklyData =
     data?.weeklyData.filter((client) => {

@@ -6,6 +6,7 @@ import {
   Line,
   LineChart,
   ReferenceArea,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -52,17 +53,23 @@ export default function ClientChart({
       return currentWeek === undefined || weekNum <= currentWeek;
     })
     .sort(([a], [b]) => parseInt(a) - parseInt(b))
-    .map(([week, count]) => ({
-      week: getWeekDateRange(parseInt(week), targetYear),
-      weekNum: parseInt(week),
-      leads: count,
-      status: statusByWeek[parseInt(week)] || "active",
-      poster: posterByWeek[parseInt(week)] || currentPoster || "-",
-      isFirstSeen:
-        firstSeenWeek !== undefined
-          ? parseInt(week) === firstSeenWeek
-          : false,
-    }));
+    .map(([week, count]) => {
+      const weekNum = parseInt(week, 10);
+      const status = statusByWeek[weekNum] || "active";
+      const weekLabel = getWeekDateRange(weekNum, targetYear);
+      return {
+        week: weekLabel,
+        weekNum,
+        leads: count,
+        status,
+        poster: posterByWeek[weekNum] || currentPoster || "-",
+        isFirstSeen: firstSeenWeek !== undefined ? weekNum === firstSeenWeek : false,
+        onboardingLeads: status === "onboarding" ? count : null,
+        activeLeads: status === "active" ? count : null,
+        engagementLeads: status === "engagement only" ? count : null,
+        pausedLeads: status === "paused" ? count : null,
+      };
+    });
   const uniquePosters = Array.from(
     new Set(Object.values(posterByWeek).filter(Boolean))
   );
@@ -74,10 +81,18 @@ export default function ClientChart({
       : `Mixed (${uniquePosters.length})`;
 
   const firstWeekValue = firstSeenWeek ?? chartData[0]?.weekNum;
+  const firstWeekEntry = chartData.find((point) => point.isFirstSeen);
 
   const onboardingRanges = chartData
     .filter((point) => point.status === "onboarding")
     .map((point) => point.week);
+
+  const statusSeries = [
+    { key: "activeLeads", label: "Active", color: statusColorMap.active },
+    { key: "engagementLeads", label: "Engagement", color: statusColorMap["engagement only"] },
+    { key: "onboardingLeads", label: "Onboarding", color: statusColorMap.onboarding },
+    { key: "pausedLeads", label: "Paused", color: statusColorMap.paused },
+  ];
 
   if (chartData.length === 0) {
     return (
@@ -86,9 +101,6 @@ export default function ClientChart({
       </div>
     );
   }
-
-  const latestStatus = chartData[chartData.length - 1]?.status ?? "active";
-  const lineColor = statusColorMap[latestStatus];
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-slate-900">
@@ -99,13 +111,13 @@ export default function ClientChart({
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={chartData}>
           {onboardingRanges.map((weekLabel) => (
-          <ReferenceArea
-            key={`onboarding-${weekLabel}`}
-            x1={weekLabel}
-            x2={weekLabel}
-            fill="#ede9fe"
-            fillOpacity={0.8}
-          />
+            <ReferenceArea
+              key={`onboarding-${weekLabel}`}
+              x1={weekLabel}
+              x2={weekLabel}
+              fill="#ede9fe"
+              fillOpacity={0.8}
+            />
           ))}
 
           <ReferenceLine
@@ -119,6 +131,16 @@ export default function ClientChart({
               fontSize: 10,
             }}
           />
+          {firstWeekEntry && (
+            <ReferenceDot
+              x={firstWeekEntry.week}
+              y={firstWeekEntry.leads}
+              r={6}
+              fill="#9333ea"
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
+          )}
 
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -130,49 +152,35 @@ export default function ClientChart({
           />
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip
-            formatter={(value: number, name: string, entry: any) => {
-              if (name === "leads") {
-                return [`${value}`, "Leads"];
-              }
-              return [value, name];
-            }}
+            formatter={(value: number) => [`${value}`, "Leads"]}
             labelFormatter={(label, payload) => {
-              const status = payload?.[0]?.payload?.status || "active";
-              const poster = payload?.[0]?.payload?.poster || "-";
+              const payloadEntry =
+                payload?.find((entry) => entry?.value !== null && entry?.value !== undefined) ??
+                payload?.[0];
+              const status = payloadEntry?.payload?.status || "active";
+              const poster = payloadEntry?.payload?.poster || "-";
               return `${label} - ${status} | Poster: ${poster}`;
             }}
           />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="leads"
-            stroke={lineColor}
-            strokeWidth={2}
-            dot={(props: any) => {
-              const { cx, cy, payload } = props;
-              const dotKey = `dot-${payload?.weekNum ?? "na"}-${payload?.leads ?? "na"}`;
-              if (payload?.isFirstSeen) {
-                return (
-                  <circle
-                    key={dotKey}
-                    cx={cx}
-                    cy={cy}
-                    r={6}
-                    fill="#9333ea"
-                    stroke="#ffffff"
-                    strokeWidth={2}
-                  />
-                );
-              }
-              return <circle key={dotKey} cx={cx} cy={cy} r={4} fill={lineColor} />;
-            }}
-            activeDot={{ r: 6, fill: lineColor, stroke: lineColor }}
-            name="Leads"
-          />
+          <Legend wrapperStyle={{ fontSize: 11 }} />
+          {statusSeries.map((series) => (
+            <Line
+              key={series.key}
+              type="monotone"
+              dataKey={series.key}
+              stroke={series.color}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 5, fill: series.color, stroke: series.color }}
+              legendType="circle"
+              name={`${series.label} leads`}
+              connectNulls={false}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
       <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
-        Purple marker = first week appeared, violet shaded weeks = onboarding.
+        Purple marker = first week appeared, violet shaded weeks = onboarding; line colors follow status (violet=onboarding, blue=active, yellow=engagement, red=paused).
       </p>
     </div>
   );

@@ -162,10 +162,10 @@ export function parseSheetData(
         headerDates.push({ index: col, date: new Date(parsed) });
         foundDate = true;
       }
-      const yearStart = new Date(year, 0, 1);
       const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+      const weekOneStart = getWeekStartDate(1, year);
       const yearFilteredDates = headerDates.filter(
-        (entry) => entry.date >= yearStart && entry.date <= yearEnd
+        (entry) => entry.date >= weekOneStart && entry.date <= yearEnd
       );
       currentHeaderDates = yearFilteredDates.length ? yearFilteredDates : headerDates;
       if (currentHeaderDates.length === 0) {
@@ -226,10 +226,10 @@ export function parseSheetData(
     }
 
     // Skip empty rows or rows without data
-    if (!clientName || !podValue) continue;
+    if (!clientName) continue;
 
       // Strict Pod 3 filter for all downstream stats (including poster/copywriter performance)
-      if (!isPod3Value(podValue)) continue;
+    if (!isPod3Value(podValue, year)) continue;
 
     // Skip if no leads (but allow 0 for tracking status)
     if (weeklyTotal < 0) continue;
@@ -286,10 +286,13 @@ export function parseSheetData(
   return { leads, monthlyLeads };
 }
 
-  function isPod3Value(value: string): boolean {
-    const normalized = value.trim().toLowerCase();
-    return normalized === "pod 3" || normalized === "pod3";
+function isPod3Value(value: string | undefined, year: number): boolean {
+  if (!value) {
+    return year <= 2024;
   }
+  const normalized = value.trim().toLowerCase();
+  return normalized === "pod 3" || normalized === "pod3";
+}
 
 export function aggregateByWeekly(leads: Lead[]): Map<string, AggregatedLead> {
   const aggregated = new Map<string, AggregatedLead>();

@@ -88,7 +88,23 @@ export default function WeeklyTable({
   };
 
   const normalizedCurrentWeek = Math.max(1, Math.floor(currentWeek ?? 1));
-  const sortedWeeks = Array.from({ length: normalizedCurrentWeek }, (_, idx) => idx + 1);
+
+  let maxWeekInProps = 0;
+  data.forEach((client) => {
+    Object.keys(client.weeks).forEach((weekKey) => {
+      const weekNum = Number.parseInt(weekKey, 10);
+      if (Number.isFinite(weekNum)) {
+        maxWeekInProps = Math.max(maxWeekInProps, weekNum);
+      }
+    });
+  });
+
+  const latestAvailableWeek = Math.max(1, maxWeekInProps);
+  const visibleWeekCount = Math.max(
+    1,
+    Math.min(normalizedCurrentWeek, latestAvailableWeek)
+  );
+  const sortedWeeks = Array.from({ length: visibleWeekCount }, (_, idx) => idx + 1);
   const clientExportWeeks = sortedWeeks;
 
   const targetYear = selectedYear ?? new Date().getFullYear();
@@ -214,7 +230,7 @@ export default function WeeklyTable({
     let clientTotal = 0;
     Object.entries(client.weeks).forEach(([week, count]) => {
       const weekNum = parseInt(week);
-      if (weekNum > normalizedCurrentWeek) return;
+      if (weekNum > visibleWeekCount) return;
       clientTotal += count;
       weekTotals.set(weekNum, (weekTotals.get(weekNum) || 0) + count);
     });
@@ -647,7 +663,7 @@ export default function WeeklyTable({
                             posterByWeek={client.posterByWeek}
                             currentPoster={client.currentPoster}
                             firstSeenWeek={client.firstSeenWeek}
-                            currentWeek={normalizedCurrentWeek}
+                            currentWeek={visibleWeekCount}
                             year={targetYear}
                           />
                         </div>

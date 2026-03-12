@@ -132,7 +132,12 @@ const MONTH_ORDER = [
   "December",
 ];
 
-const availableYears = [2024, 2025, 2026];
+const baseAvailableYear = 2024;
+const availableYearsCurrentYear = new Date().getFullYear();
+const availableYears = Array.from(
+  { length: Math.max(1, availableYearsCurrentYear - baseAvailableYear + 1) },
+  (_, index) => baseAvailableYear + index
+);
 
 function aggregateWeeklyFromWeeklyData(
   weeklyData: WeeklyClientData[],
@@ -361,7 +366,11 @@ export default function MonthlyTotals({
     setLoadingAllYears(true);
     try {
       const currentYearValue = new Date().getFullYear();
-      const years = [2025, 2026, 2027, 2028].filter(y => y <= currentYearValue); // Only fetch up to current year
+      const earliestTimelineYear = 2024;
+      const years: number[] = [];
+      for (let year = earliestTimelineYear; year <= currentYearValue; year += 1) {
+        years.push(year);
+      }
       const chronologicalData: MonthlyTotal[] = [];
 
       // Fetch data for each year

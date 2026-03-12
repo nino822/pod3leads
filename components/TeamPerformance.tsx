@@ -426,8 +426,7 @@ export default function TeamPerformance({
 
   return (
     <>
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
-        <div id="team-performance-section" className="xl:col-span-3 bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700">
+      <div id="team-performance-section" className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Team Performance</h3>
           <div className="flex flex-wrap items-center gap-2">
@@ -500,7 +499,7 @@ export default function TeamPerformance({
         </div>
 
         <p className="text-xs text-gray-600 dark:text-slate-400 mb-3">
-          Team performance uses the selected year only. "Active" filtering is based on the current week. Hover the info icons for metric definitions and hover percentages to see account names.
+          Team performance uses the selected year only. "Active" filtering is based on the latest week available in that year. Hover the info icons for metric definitions and hover percentages to see account names.
         </p>
 
         <div
@@ -681,11 +680,11 @@ export default function TeamPerformance({
           </table>
         </div>
       </div>
-        {showAtRiskAccounts && (
-          <div
-            id="at-risk-accounts-section"
-            className="col-span-1 xl:col-span-3 bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700"
-          >
+      {showAtRiskAccounts && (
+        <div
+          id="at-risk-accounts-section"
+          className="mt-6 w-full bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700"
+        >
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">At-risk Accounts</h3>
               <div className="flex flex-wrap items-center gap-2">
@@ -869,7 +868,8 @@ export default function TeamPerformance({
           )}
         </div>
         <div id="at-risk-accounts-chart" className="space-y-4">
-              {atRiskChartData.length > 0 && (
+          <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">At-risk weekly trend (latest data)</p>
+          {atRiskChartData.length > 0 && (
                 <div className="h-64 w-full rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
@@ -964,7 +964,6 @@ export default function TeamPerformance({
             </div>
           </div>
         )}
-      </div>
 
       {hoverTooltip.visible && (
         <div
