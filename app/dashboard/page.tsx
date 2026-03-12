@@ -629,11 +629,12 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <TeamPerformance
-              data={data.teamPerformance}
-              atRiskAccounts={data.atRiskAccounts}
-              selectedYear={filters.year}
-            />
+        <TeamPerformance
+          data={data.teamPerformance}
+          weeklyData={data.weeklyData}
+          atRiskAccounts={data.atRiskAccounts}
+          selectedYear={filters.year}
+        />
           </motion.div>
         )}
 

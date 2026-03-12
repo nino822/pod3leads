@@ -25,6 +25,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import ClientChart from "./ClientChart";
+import { WeeklyClientData } from "@/lib/transform";
 
 type RoleTab = "posters" | "copywriters";
 
@@ -76,6 +78,18 @@ type AtRiskAccount = {
   }>;
 };
 
+type ActivityStatus = "active" | "engagement only";
+
+type LowLeadAccount = {
+  client: string;
+  status: ActivityStatus;
+  latestWeek: number;
+  latestLeads: number;
+  consecutiveWeeks: number;
+  noLeadDays: number;
+  weeklyData: WeeklyClientData;
+};
+
 type LineConfig = {
   key: string;
   label: string;
@@ -88,11 +102,17 @@ interface TeamPerformanceProps {
     posters: ContributorPerformance[];
     copywriters: ContributorPerformance[];
   };
+  weeklyData: WeeklyClientData[];
   atRiskAccounts: AtRiskAccount[];
   selectedYear?: number;
 }
 
-export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: TeamPerformanceProps) {
+export default function TeamPerformance({
+  data,
+  weeklyData,
+  atRiskAccounts,
+  selectedYear,
+}: TeamPerformanceProps) {
   const showAtRiskAccounts = selectedYear !== 2025;
   const [tab, setTab] = useState<RoleTab>("posters");
   const [hideInactiveRecent, setHideInactiveRecent] = useState(false);
@@ -100,6 +120,11 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
   const [atRiskCriteria, setAtRiskCriteria] = useState({
     minAvgLeadsPerWeek: "",
     onlyLowerThanPrevious: true,
+  });
+  const [lowLeadThreshold, setLowLeadThreshold] = useState(0);
+  const [lowLeadStatusFilter, setLowLeadStatusFilter] = useState<Record<ActivityStatus, boolean>>({
+    active: true,
+    "engagement only": true,
   });
   const [hoverTooltip, setHoverTooltip] = useState<{
     visible: boolean;
@@ -295,6 +320,48 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
         return point;
       });
     }, [weekSeries, lineConfigs, weeklyTrendMap, resolvedYear]);
+
+  const lowLeadAccounts = useMemo(() => {
+    const threshold = Number(lowLeadThreshold) || 0;
+    const entries: LowLeadAccount[] = [];
+    weeklyData.forEach((client) => {
+      const weekEntries = Object.entries(client.weeks)
+        .map(([week, leads]) => ({ week: Number(week), leads }))
+        .filter((entry) => Number.isFinite(entry.week))
+        .sort((a, b) => a.week - b.week);
+      if (weekEntries.length === 0) return;
+
+      const latestEntry = weekEntries[weekEntries.length - 1];
+      const rawStatus =
+        (client.statusByWeek?.[latestEntry.week] as ActivityStatus | undefined) ?? client.status;
+      const latestStatus: ActivityStatus | undefined =
+        rawStatus === "active" || rawStatus === "engagement only" ? rawStatus : undefined;
+      if (!latestStatus || !lowLeadStatusFilter[latestStatus]) return;
+      if (latestEntry.leads > threshold) return;
+
+      let consecutiveWeeks = 0;
+      for (let i = weekEntries.length - 1; i >= 0; i--) {
+        if (weekEntries[i].leads <= threshold) {
+          consecutiveWeeks++;
+        } else {
+          break;
+        }
+      }
+      const noLeadDays = consecutiveWeeks * 7;
+
+      entries.push({
+        client: client.client,
+        status: latestStatus,
+        latestWeek: latestEntry.week,
+        latestLeads: latestEntry.leads,
+        consecutiveWeeks,
+        noLeadDays,
+        weeklyData: client,
+      });
+    });
+
+    return entries.sort((a, b) => b.consecutiveWeeks - a.consecutiveWeeks);
+  }, [weeklyData, lowLeadThreshold, lowLeadStatusFilter]);
 
   const handleCriteriaNumberChange = (
     key: "minAvgLeadsPerWeek",
@@ -671,21 +738,109 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
               />
               Show only accounts where current average is lower than previous average
             </label>
-            <div className="mb-3 grid grid-cols-3 gap-2 text-xs">
-              <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-                <p className="text-gray-500 dark:text-slate-400">Matching Accounts</p>
-                <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.total}</p>
-              </div>
-              <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-                <p className="text-gray-500 dark:text-slate-400">Avg Current Leads/Week</p>
-                <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgCurrentLeadsPerWeek.toFixed(1)}</p>
-              </div>
-              <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-                <p className="text-gray-500 dark:text-slate-400">Avg Previous Leads/Week</p>
-                <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
-              </div>
+        <div className="mb-3 grid grid-cols-3 gap-2 text-xs">
+          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+            <p className="text-gray-500 dark:text-slate-400">Matching Accounts</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.total}</p>
+          </div>
+          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+            <p className="text-gray-500 dark:text-slate-400">Avg Current Leads/Week</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgCurrentLeadsPerWeek.toFixed(1)}</p>
+          </div>
+          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+            <p className="text-gray-500 dark:text-slate-400">Avg Previous Leads/Week</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
+          </div>
+        </div>
+        <div className="mb-4 rounded-lg border border-dashed border-blue-200 dark:border-blue-900/40 bg-white/70 dark:bg-slate-900/60 p-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Low-lead accounts</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                Shows active/engagement clients whose latest week had ≤ threshold leads.
+              </p>
             </div>
-            <div id="at-risk-accounts-chart" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-slate-300">
+              <label className="inline-flex items-center gap-1">
+                <span>Threshold</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={lowLeadThreshold}
+                  onChange={(event) => setLowLeadThreshold(Number(event.target.value))}
+                  className="w-16 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-gray-900 dark:text-slate-100"
+                />
+              </label>
+              <label className="inline-flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={lowLeadStatusFilter.active}
+                  onChange={(event) =>
+                    setLowLeadStatusFilter((prev) => ({ ...prev, active: event.target.checked }))
+                  }
+                  className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Active</span>
+              </label>
+              <label className="inline-flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={lowLeadStatusFilter["engagement only"]}
+                  onChange={(event) =>
+                    setLowLeadStatusFilter((prev) => ({
+                      ...prev,
+                      "engagement only": event.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Engagement</span>
+              </label>
+            </div>
+          </div>
+          {lowLeadAccounts.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {lowLeadAccounts.map((account) => (
+                <div
+                  key={account.client}
+                  className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 p-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{account.client}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
+                        Status: {account.status}
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-semibold uppercase text-blue-700 dark:text-blue-300">
+                      {account.consecutiveWeeks}w {account.noLeadDays}d
+                    </span>
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500 dark:text-slate-400">
+                    Latest week: {getWeekDateRange(account.latestWeek, selectedYear ?? new Date().getFullYear())} — {account.latestLeads} leads
+                  </div>
+                  <div className="mt-3 h-40">
+                    <ClientChart
+                      clientName={account.client}
+                      weeklyData={account.weeklyData.weeks}
+                      statusByWeek={account.weeklyData.statusByWeek}
+                      posterByWeek={account.weeklyData.posterByWeek}
+                      currentPoster={account.weeklyData.currentPoster}
+                      firstSeenWeek={account.weeklyData.firstSeenWeek}
+                      currentWeek={account.latestWeek}
+                      year={selectedYear}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-slate-400">
+              No accounts match the current low-lead criteria.
+            </p>
+          )}
+        </div>
+        <div id="at-risk-accounts-chart" className="space-y-4">
               {atRiskChartData.length > 0 && (
                 <div className="h-64 w-full rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
                   <ResponsiveContainer width="100%" height="100%">
