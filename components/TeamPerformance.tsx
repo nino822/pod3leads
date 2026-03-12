@@ -77,6 +77,13 @@ type AtRiskAccount = {
   }>;
 };
 
+const statusChartColorMap: Record<AtRiskAccount["currentStatus"], string> = {
+  active: "#2563eb",
+  onboarding: "#8b5cf6",
+  "engagement only": "#fbbf24",
+  paused: "#94a3b8",
+};
+
 type ActivityStatus = "active" | "engagement only";
 
 type LowLeadAccount = {
@@ -276,7 +283,6 @@ export default function TeamPerformance({
     ]);
 
     const resolvedYear = selectedYear ?? new Date().getFullYear();
-    const linePalette = ["#2563eb", "#c026d3", "#6d28d9", "#fb7185", "#f97316", "#059669", "#0ea5e9", "#7c3aed", "#facc15"];
     const weeklyTrendMap = useMemo(() => {
       const map = new Map<string, Map<number, number>>();
       filteredAtRiskAccounts.forEach((account) => {
@@ -303,7 +309,7 @@ export default function TeamPerformance({
           key: `line-${slugifyClientName(account.client) || `client-${index}`}`,
           label: account.client,
           clientName: account.client,
-          color: linePalette[index % linePalette.length],
+          color: statusChartColorMap[account.currentStatus] || "#2563eb",
         })),
       [filteredAtRiskAccounts]
     );
@@ -737,141 +743,52 @@ export default function TeamPerformance({
             <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
               Set your own criteria using average leads per week. Accounts below update automatically based on these values.
             </p>
-            <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <label className="text-xs text-gray-700 dark:text-slate-300">
-                Minimum Avg Leads Per Week
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="Any"
-                  value={atRiskCriteria.minAvgLeadsPerWeek}
-                  onChange={(e) => handleCriteriaNumberChange("minAvgLeadsPerWeek", e.target.value)}
-                  className="mt-1 w-full rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-sm text-gray-900 dark:text-slate-100"
-                />
-              </label>
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <label className="text-xs text-gray-700 dark:text-slate-300">
+                  Minimum Avg Leads Per Week
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Any"
+                    value={atRiskCriteria.minAvgLeadsPerWeek}
+                    onChange={(e) => handleCriteriaNumberChange("minAvgLeadsPerWeek", e.target.value)}
+                    className="mt-1 w-full rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-sm text-gray-900 dark:text-slate-100"
+                  />
+                </label>
+                <label className="text-xs text-gray-700 dark:text-slate-300 flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={atRiskCriteria.onlyLowerThanPrevious}
+                    onChange={(e) =>
+                      setAtRiskCriteria((prev) => ({
+                        ...prev,
+                        onlyLowerThanPrevious: e.target.checked,
+                      }))
+                    }
+                    className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="leading-tight">
+                    Show only accounts where current average is lower than previous average
+                  </span>
+                </label>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+                  <p className="text-gray-500 dark:text-slate-400">Matching Accounts</p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.total}</p>
+                </div>
+                <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+                  <p className="text-gray-500 dark:text-slate-400">Avg Current Leads/Week</p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgCurrentLeadsPerWeek.toFixed(1)}</p>
+                </div>
+                <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+                  <p className="text-gray-500 dark:text-slate-400">Avg Previous Leads/Week</p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
+                </div>
+              </div>
             </div>
-            <label className="mb-3 inline-flex items-center gap-2 text-xs text-gray-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={atRiskCriteria.onlyLowerThanPrevious}
-                onChange={(e) =>
-                  setAtRiskCriteria((prev) => ({
-                    ...prev,
-                    onlyLowerThanPrevious: e.target.checked,
-                  }))
-                }
-                className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
-              />
-              Show only accounts where current average is lower than previous average
-            </label>
-        <div className="mb-3 grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-            <p className="text-gray-500 dark:text-slate-400">Matching Accounts</p>
-            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.total}</p>
-          </div>
-          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-            <p className="text-gray-500 dark:text-slate-400">Avg Current Leads/Week</p>
-            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgCurrentLeadsPerWeek.toFixed(1)}</p>
-          </div>
-          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-            <p className="text-gray-500 dark:text-slate-400">Avg Previous Leads/Week</p>
-            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
-          </div>
-        </div>
-        <div className="mb-4 rounded-lg border border-dashed border-blue-200 dark:border-blue-900/40 bg-white/70 dark:bg-slate-900/60 p-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Low-lead accounts</p>
-              <p className="text-xs text-gray-500 dark:text-slate-400">
-                Shows active/engagement clients with no leads for a minimum number of days. The "w/d" badge reflects that same consecutive zero-lead stretch (e.g., 11w 77d = 11 weeks / 77 days with no leads).
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-slate-300">
-              <label className="inline-flex items-center gap-1">
-                <span>Min days no leads</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={minNoLeadDays}
-                  onChange={(event) => {
-                    const value = Number(event.target.value);
-                    setMinNoLeadDays(Number.isNaN(value) ? 0 : value);
-                  }}
-                  className="w-16 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-gray-900 dark:text-slate-100"
-                />
-              </label>
-              <span className="text-[11px] text-gray-500 dark:text-slate-400">
-                0 = default to 3 days
-              </span>
-              <label className="inline-flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={lowLeadStatusFilter.active}
-                  onChange={(event) =>
-                    setLowLeadStatusFilter((prev) => ({ ...prev, active: event.target.checked }))
-                  }
-                  className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
-                />
-                <span>Active</span>
-              </label>
-              <label className="inline-flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={lowLeadStatusFilter["engagement only"]}
-                  onChange={(event) =>
-                    setLowLeadStatusFilter((prev) => ({
-                      ...prev,
-                      "engagement only": event.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
-                />
-                <span>Engagement</span>
-              </label>
-            </div>
-          </div>
-          {lowLeadAccounts.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {lowLeadAccounts.map((account) => {
-                const graphHeightClass = account.latestLeads === 0 ? "h-28" : "h-40";
-                const lastLeadText =
-                  account.lastLeadLabel && account.lastLeadLabel !== "N/A"
-                    ? account.lastLeadLabel
-                    : "No prior leads";
-                return (
-                  <div
-                    key={account.client}
-                    className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 p-3"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{account.client}</p>
-                        <p className="text-xs text-gray-500 dark:text-slate-400">
-                          Status: {account.status}
-                        </p>
-                      </div>
-                      <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
-                        No leads {account.noLeadDays} days ({account.consecutiveWeeks} weeks)
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
-                      Last lead: {lastLeadText}.
-                    </p>
-                    <div className="mt-2 rounded-md border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/60 p-2 text-[11px] text-gray-600 dark:text-gray-300">
-                      <p>Streak: {account.consecutiveWeeks} consecutive zero-lead weeks</p>
-                      <p>Days without leads: {account.noLeadDays}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-xs text-gray-500 dark:text-slate-400">
-              No accounts match the current low-lead criteria.
-            </p>
-          )}
-        </div>
-        <div id="at-risk-accounts-chart" className="space-y-4">
+        <div id="at-risk-accounts-chart" className="space-y-4 mt-4">
           <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">At-risk weekly trend (latest data)</p>
           {atRiskChartData.length > 0 && (
                 <div className="h-64 w-full rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
@@ -964,6 +881,96 @@ export default function TeamPerformance({
                 <div className="border border-gray-200 dark:border-slate-700 rounded-md p-4 text-sm text-gray-500 dark:text-slate-400">
                   No accounts match your current criteria.
                 </div>
+              )}
+            </div>
+            <div className="mt-4 rounded-lg border border-dashed border-blue-200 dark:border-blue-900/40 bg-white/70 dark:bg-slate-900/60 p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Low-lead accounts</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    Shows active or engagement clients with zero leads for the configured number of days. Onboarding weeks are ignored.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-slate-300">
+                  <label className="inline-flex items-center gap-1">
+                    <span>Min days no leads</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={minNoLeadDays}
+                      onChange={(event) => {
+                        const value = Number(event.target.value);
+                        setMinNoLeadDays(Number.isNaN(value) ? 0 : value);
+                      }}
+                      className="w-16 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-gray-900 dark:text-slate-100"
+                    />
+                  </label>
+                  <span className="text-[11px] text-gray-500 dark:text-slate-400">0 = default to 3 days</span>
+                  <label className="inline-flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={lowLeadStatusFilter.active}
+                      onChange={(event) =>
+                        setLowLeadStatusFilter((prev) => ({ ...prev, active: event.target.checked }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>Active</span>
+                  </label>
+                  <label className="inline-flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={lowLeadStatusFilter["engagement only"]}
+                      onChange={(event) =>
+                        setLowLeadStatusFilter((prev) => ({
+                          ...prev,
+                          "engagement only": event.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>Engagement</span>
+                  </label>
+                </div>
+              </div>
+              {lowLeadAccounts.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {lowLeadAccounts.map((account) => {
+                    const lastLeadText =
+                      account.lastLeadLabel && account.lastLeadLabel !== "N/A"
+                        ? account.lastLeadLabel
+                        : "No prior lead data";
+                    const badgeClass =
+                      account.status === "active" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700";
+                    return (
+                      <div
+                        key={account.client}
+                        className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 p-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{account.client}</p>
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${badgeClass}`}
+                            >
+                              {account.status}
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+                            No leads {account.noLeadDays} days ({account.consecutiveWeeks} weeks)
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">Last lead: {lastLeadText}.</p>
+                        <div className="mt-2 rounded-md border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/60 p-2 text-[11px] text-gray-600 dark:text-gray-300">
+                          <p>Streak: {account.consecutiveWeeks} consecutive zero-lead weeks</p>
+                          <p>Days without leads: {account.noLeadDays}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-slate-400">No accounts match the current low-lead criteria.</p>
               )}
             </div>
           </div>

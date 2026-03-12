@@ -53,7 +53,15 @@ export function getWeekEndDate(week: number, year: number = new Date().getFullYe
 }
 
 export function getWeekMonth(week: number, year: number = new Date().getFullYear()): string {
-  return format(getWeekStartDate(week, year), "MMMM");
+  const bounds = getWeekDisplayBounds(week, year);
+  const { startDate, endDate } = bounds;
+  const chosenDate =
+    endDate.getFullYear() === year
+      ? endDate
+      : startDate.getFullYear() === year
+        ? startDate
+        : endDate;
+  return format(chosenDate, "MMMM");
 }
 
 export function getWeekDateRange(week: number, year: number = new Date().getFullYear()): string {

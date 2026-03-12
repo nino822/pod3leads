@@ -30,22 +30,22 @@ function ContributorAverageChart({
   roleLabel,
   weeklyAverages,
 }: ContributorAverageChartProps) {
-  if (!weeklyAverages || weeklyAverages.length === 0) {
+  const chartData = useMemo(
+    () =>
+      (weeklyAverages || []).map((point) => ({
+        ...point,
+        weekLabel: `W${point.week}`,
+      })),
+    [weeklyAverages]
+  );
+
+  if (chartData.length === 0) {
     return (
       <div className="py-2 px-4 text-center text-xs text-gray-500 dark:text-slate-400">
         No weekly average data available.
       </div>
     );
   }
-
-  const chartData = useMemo(
-    () =>
-      weeklyAverages.map((point) => ({
-        ...point,
-        weekLabel: `W${point.week}`,
-      })),
-    [weeklyAverages]
-  );
 
   return (
     <div className="py-2 px-4 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-700">

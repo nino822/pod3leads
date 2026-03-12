@@ -357,6 +357,22 @@ export default function MonthlyTotals({
   const formatAverage = (value?: number) =>
     typeof value === "number" && Number.isFinite(value) ? value.toFixed(1) : "-";
 
+  const isTimelineView = showAllYears && chartData.length > 0;
+  const timelineMinWidth = isTimelineView
+    ? Math.max(chartData.length * 90, 960)
+    : undefined;
+  const xAxisConfig = isTimelineView
+    ? {
+        tick: { fontSize: 10 },
+        angle: -45,
+        textAnchor: "end" as const,
+        interval: 0,
+        height: 60,
+      }
+    : effectiveGraphMode === "weekly"
+      ? { tick: { fontSize: 9 }, interval: 2, height: 40 }
+      : { tick: { fontSize: 11 }, interval: 0, height: 32 };
+
 
   useEffect(() => {
     if (showAllYears && allYearsData.length === 0) {
@@ -414,7 +430,7 @@ export default function MonthlyTotals({
     <div id="monthly-totals-section" className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 mb-8 border border-transparent dark:border-slate-700">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
-          {effectiveGraphMode === "weekly" ? "Leads Per Week (All Clients)" : "Leads Per Month (All Clients)"} {showAllYears && "- Timeline from 2025"}
+          {effectiveGraphMode === "weekly" ? "Leads Per Week (All Clients)" : "Leads Per Month (All Clients)"} {showAllYears && "- Timeline from 2024"}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm text-gray-700 dark:text-slate-300 flex items-center gap-2">
@@ -520,41 +536,59 @@ export default function MonthlyTotals({
         </div>
       </div>
 
-      <div id="monthly-totals-chart" className="h-72 w-full rounded-md border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 mb-4">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 16, right: 12, left: 8, bottom: 16 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" tick={{ fontSize: effectiveGraphMode === "weekly" ? 9 : 11 }} interval={effectiveGraphMode === "weekly" ? 2 : 0} />
-            <YAxis yAxisId="left" tick={{ fontSize: 11 }} label={{ value: "Leads", angle: -90, position: "insideLeft", style: { fontSize: 11 } }} />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              hide={!showActiveClients}
-              tick={{ fontSize: 11 }}
-              label={showActiveClients ? { value: "Active Clients", angle: 90, position: "insideRight", style: { fontSize: 11 } } : undefined}
-            />
-            <Tooltip />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar yAxisId="left" dataKey="total" fill="#2563eb" radius={[6, 6, 0, 0]} name="Leads" />
-            {showActiveClients && (
-              <Line
-                key={`active-clients-line-${lineAnimationSeed}`}
-                yAxisId="right"
-                type="monotone"
-                dataKey="activeClients"
-                stroke="#9333ea"
-                strokeWidth={3}
-                isAnimationActive
-                animationBegin={0}
-                animationDuration={900}
-                animationEasing="ease-in-out"
-                dot={{ fill: "#9333ea", r: 4 }}
-                activeDot={{ r: 5, fill: "#9333ea" }}
-                name="Avg Active Clients"
-              />
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
+      <div
+        id="monthly-totals-chart"
+        className="h-72 w-full rounded-md border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 mb-4"
+      >
+        <div className={`h-full w-full ${isTimelineView ? "overflow-x-auto" : ""}`}>
+          <div
+            className={`h-full ${isTimelineView ? "w-full" : ""}`}
+            style={timelineMinWidth ? { minWidth: timelineMinWidth } : undefined}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 16, right: 12, left: 8, bottom: 16 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" {...xAxisConfig} />
+                <YAxis
+                  yAxisId="left"
+                  tick={{ fontSize: 11 }}
+                  label={{ value: "Leads", angle: -90, position: "insideLeft", style: { fontSize: 11 } }}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  hide={!showActiveClients}
+                  tick={{ fontSize: 11 }}
+                  label={
+                    showActiveClients
+                      ? { value: "Active Clients", angle: 90, position: "insideRight", style: { fontSize: 11 } }
+                      : undefined
+                  }
+                />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar yAxisId="left" dataKey="total" fill="#2563eb" radius={[6, 6, 0, 0]} name="Leads" />
+                {showActiveClients && (
+                  <Line
+                    key={`active-clients-line-${lineAnimationSeed}`}
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="activeClients"
+                    stroke="#9333ea"
+                    strokeWidth={3}
+                    isAnimationActive
+                    animationBegin={0}
+                    animationDuration={900}
+                    animationEasing="ease-in-out"
+                    dot={{ fill: "#9333ea", r: 4 }}
+                    activeDot={{ r: 5, fill: "#9333ea" }}
+                    name="Avg Active Clients"
+                  />
+                )}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       {effectiveGraphMode === "monthly" && (

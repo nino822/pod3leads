@@ -171,13 +171,10 @@ export function parseSheetData(
       if (currentHeaderDates.length === 0) {
         continue;
       }
-      if (!foundFirstHeader) {
-        foundFirstHeader = true;
-        currentWeek = 1; // First header = Week 1
-      } else {
-        currentWeek++; // Subsequent headers increment the week
-      }
-      console.log(`Found header row at ${i} for Week ${currentWeek}`);
+      const headerWeekNumber = getWeekNumberForDate(currentHeaderDates[0].date);
+      currentWeek = headerWeekNumber;
+      foundFirstHeader = true;
+      console.log(`Found header row at ${i} for Week ${currentWeek} (${format(currentHeaderDates[0].date, "MMM d")})`);
       continue;
     }
 
@@ -251,11 +248,7 @@ export function parseSheetData(
       );
     }
 
-    const referenceDate =
-      overlappingDates.find((entry) => entry.date.getFullYear() === year)?.date ??
-      overlappingDates[0]?.date ??
-      weekStart;
-    const monthLabel = referenceDate ? format(referenceDate, "MMMM") : format(weekStart, "MMMM");
+    const monthLabel = getWeekMonth(weekNumber, year);
 
     const leadRecord: Lead = {
       client: clientName,
@@ -376,8 +369,9 @@ export function calculatePodStats(
   if (weeklyData && weeklyData.length > 0) {
     activeClientsSet = new Set();
     weeklyData.forEach((client) => {
-      const hasWeekEntry = client.weeks[targetWeek] !== undefined;
+      const hasWeekEntry = Object.prototype.hasOwnProperty.call(client.weeks, targetWeek);
       if (!hasWeekEntry) return;
+
       const statusAtWeek = client.statusByWeek?.[targetWeek] ?? client.status;
       if (statusAtWeek === "active" || statusAtWeek === "engagement only") {
         activeClientsSet.add(client.client);
