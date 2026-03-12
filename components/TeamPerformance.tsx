@@ -346,8 +346,9 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
   );
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-      <div id="team-performance-section" className={`${showAtRiskAccounts ? "xl:col-span-2" : "xl:col-span-3"} bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700`}>
+    <>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+        <div id="team-performance-section" className="xl:col-span-3 bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Team Performance</h3>
           <div className="flex flex-wrap items-center gap-2">
@@ -601,6 +602,186 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
           </table>
         </div>
       </div>
+        {showAtRiskAccounts && (
+          <div
+            id="at-risk-accounts-section"
+            className="col-span-1 xl:col-span-3 bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">At-risk Accounts</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <ExportMenu
+                  options={[
+                    {
+                      label: "Data CSV",
+                      key: "atrisk-data-csv",
+                      action: () => exportRowsToCsv(atRiskExportRows, "accounts-needing-attention-data"),
+                    },
+                    {
+                      label: "Data Excel",
+                      key: "atrisk-data-xlsx",
+                      action: () => exportRowsToExcel(atRiskExportRows, "accounts-needing-attention-data"),
+                    },
+                    {
+                      label: "Data PDF",
+                      key: "atrisk-data-pdf",
+                      action: () => exportRowsToPdf(atRiskExportRows, "Accounts Needing Attention Data", "accounts-needing-attention-data"),
+                    },
+                    {
+                      label: "Graph PNG",
+                      key: "atrisk-graph-png",
+                      action: () => exportAtRiskAccountsPng("at-risk-accounts-chart", "accounts-needing-attention-chart"),
+                    },
+                    {
+                      label: "Graph PDF",
+                      key: "atrisk-graph-pdf",
+                      action: () => exportAtRiskAccountsPdf("at-risk-accounts-chart", "accounts-needing-attention-chart"),
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
+              Set your own criteria using average leads per week. Accounts below update automatically based on these values.
+            </p>
+            <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label className="text-xs text-gray-700 dark:text-slate-300">
+                Minimum Avg Leads Per Week
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Any"
+                  value={atRiskCriteria.minAvgLeadsPerWeek}
+                  onChange={(e) => handleCriteriaNumberChange("minAvgLeadsPerWeek", e.target.value)}
+                  className="mt-1 w-full rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-sm text-gray-900 dark:text-slate-100"
+                />
+              </label>
+            </div>
+            <label className="mb-3 inline-flex items-center gap-2 text-xs text-gray-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={atRiskCriteria.onlyLowerThanPrevious}
+                onChange={(e) =>
+                  setAtRiskCriteria((prev) => ({
+                    ...prev,
+                    onlyLowerThanPrevious: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+              />
+              Show only accounts where current average is lower than previous average
+            </label>
+            <div className="mb-3 grid grid-cols-3 gap-2 text-xs">
+              <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+                <p className="text-gray-500 dark:text-slate-400">Matching Accounts</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.total}</p>
+              </div>
+              <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+                <p className="text-gray-500 dark:text-slate-400">Avg Current Leads/Week</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgCurrentLeadsPerWeek.toFixed(1)}</p>
+              </div>
+              <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+                <p className="text-gray-500 dark:text-slate-400">Avg Previous Leads/Week</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
+              </div>
+            </div>
+            <div id="at-risk-accounts-chart" className="space-y-4">
+              {atRiskChartData.length > 0 && (
+                <div className="h-64 w-full rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={atRiskChartData}
+                      margin={{ top: 10, right: 16, left: -8, bottom: 26 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="weekLabel"
+                        tick={{ fontSize: 9 }}
+                        angle={-45}
+                        textAnchor="end"
+                        interval={0}
+                        height={40}
+                      />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <Tooltip />
+                      <Legend wrapperStyle={{ fontSize: 12, marginTop: 4 }} />
+                      {lineConfigs.map((config) => (
+                        <Line
+                          key={config.key}
+                          type="monotone"
+                          dataKey={config.key}
+                          stroke={config.color}
+                          strokeWidth={2}
+                          dot={false}
+                          activeDot={{ r: 5 }}
+                          name={config.label}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              {filteredAtRiskAccounts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredAtRiskAccounts.map((account) => (
+                    <div
+                      key={account.client}
+                      data-account-card="true"
+                      className="flex flex-col border border-red-100 dark:border-red-900/60 bg-red-50 dark:bg-red-950/25 rounded-md p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-gray-900 dark:text-slate-100 leading-tight">{account.client}</p>
+                        <span className="text-xs font-medium text-red-700">Change: {account.delta}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                        Status: {account.currentStatus} | Recent: {account.recentAvg} | Previous: {account.previousAvg}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                        Poster: {account.poster || "-"} | CW: {account.copywriter || "-"}
+                      </p>
+                      <div className="mt-3 h-48 w-full rounded border border-red-100 dark:border-red-900/60 bg-white dark:bg-slate-900 p-1">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={(account.weeklyTrend || []).map((point) => ({
+                              ...point,
+                              weekLabel: getWeekDateRange(point.week, selectedYear ?? new Date().getFullYear()),
+                            }))}
+                            margin={{ top: 6, right: 8, left: -8, bottom: 2 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="weekLabel" tick={{ fontSize: 10 }} />
+                            <YAxis tick={{ fontSize: 10 }} />
+                            <Tooltip
+                              formatter={(value: number) => [value, "Leads"]}
+                              labelFormatter={(label, payload) => {
+                                const status = payload?.[0]?.payload?.status || "-";
+                                return `${label} | ${status}`;
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="leads"
+                              stroke="#dc2626"
+                              strokeWidth={2}
+                              dot={{ r: 2 }}
+                              activeDot={{ r: 4 }}
+                              name="Leads"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border border-gray-200 dark:border-slate-700 rounded-md p-4 text-sm text-gray-500 dark:text-slate-400">
+                  No accounts match your current criteria.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {hoverTooltip.visible && (
         <div
@@ -633,183 +814,6 @@ export default function TeamPerformance({ data, atRiskAccounts, selectedYear }: 
           )}
         </div>
       )}
-
-      {showAtRiskAccounts && (
-      <div id="at-risk-accounts-section" className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">At-risk Accounts</h3>
-          <div className="flex flex-wrap items-center gap-2">
-            <ExportMenu
-              options={[
-                {
-                  label: "Data CSV",
-                  key: "atrisk-data-csv",
-                  action: () => exportRowsToCsv(atRiskExportRows, "accounts-needing-attention-data"),
-                },
-                {
-                  label: "Data Excel",
-                  key: "atrisk-data-xlsx",
-                  action: () => exportRowsToExcel(atRiskExportRows, "accounts-needing-attention-data"),
-                },
-                {
-                  label: "Data PDF",
-                  key: "atrisk-data-pdf",
-                  action: () => exportRowsToPdf(atRiskExportRows, "Accounts Needing Attention Data", "accounts-needing-attention-data"),
-                },
-                {
-                  label: "Graph PNG",
-                  key: "atrisk-graph-png",
-                  action: () => exportAtRiskAccountsPng("at-risk-accounts-chart", "accounts-needing-attention-chart"),
-                },
-                {
-                  label: "Graph PDF",
-                  key: "atrisk-graph-pdf",
-                  action: () => exportAtRiskAccountsPdf("at-risk-accounts-chart", "accounts-needing-attention-chart"),
-                },
-              ]}
-            />
-          </div>
-        </div>
-        <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
-          Set your own criteria using average leads per week. Accounts below update automatically based on these values.
-        </p>
-        <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <label className="text-xs text-gray-700 dark:text-slate-300">
-            Minimum Avg Leads Per Week
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="Any"
-              value={atRiskCriteria.minAvgLeadsPerWeek}
-              onChange={(e) => handleCriteriaNumberChange("minAvgLeadsPerWeek", e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-sm text-gray-900 dark:text-slate-100"
-            />
-          </label>
-        </div>
-        <label className="mb-3 inline-flex items-center gap-2 text-xs text-gray-700 dark:text-slate-300">
-          <input
-            type="checkbox"
-            checked={atRiskCriteria.onlyLowerThanPrevious}
-            onChange={(e) =>
-              setAtRiskCriteria((prev) => ({
-                ...prev,
-                onlyLowerThanPrevious: e.target.checked,
-              }))
-            }
-            className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
-          />
-          Show only accounts where current average is lower than previous average
-        </label>
-        <div className="mb-3 grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-            <p className="text-gray-500 dark:text-slate-400">Matching Accounts</p>
-            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.total}</p>
-          </div>
-          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-            <p className="text-gray-500 dark:text-slate-400">Avg Current Leads/Week</p>
-            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgCurrentLeadsPerWeek.toFixed(1)}</p>
-          </div>
-          <div className="rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-            <p className="text-gray-500 dark:text-slate-400">Avg Previous Leads/Week</p>
-            <p className="text-base font-semibold text-gray-900 dark:text-slate-100">{atRiskMetrics.avgPreviousLeadsPerWeek.toFixed(1)}</p>
-          </div>
-        </div>
-        <div id="at-risk-accounts-chart" className="space-y-4">
-          {atRiskChartData.length > 0 && (
-            <div className="h-64 w-full rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={atRiskChartData}
-                  margin={{ top: 10, right: 16, left: -8, bottom: 26 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="weekLabel"
-                    tick={{ fontSize: 9 }}
-                    angle={-45}
-                    textAnchor="end"
-                    interval={0}
-                    height={40}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12, marginTop: 4 }} />
-                  {lineConfigs.map((config) => (
-                    <Line
-                      key={config.key}
-                      type="monotone"
-                      dataKey={config.key}
-                      stroke={config.color}
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 5 }}
-                      name={config.label}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-          {filteredAtRiskAccounts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredAtRiskAccounts.map((account) => (
-                <div
-                  key={account.client}
-                  data-account-card="true"
-                  className="flex flex-col border border-red-100 dark:border-red-900/60 bg-red-50 dark:bg-red-950/25 rounded-md p-3"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold text-gray-900 dark:text-slate-100 leading-tight">{account.client}</p>
-                    <span className="text-xs font-medium text-red-700">Change: {account.delta}</span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
-                    Status: {account.currentStatus} | Recent: {account.recentAvg} | Previous: {account.previousAvg}
-                  </p>
-                  <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
-                    Poster: {account.poster || "-"} | CW: {account.copywriter || "-"}
-                  </p>
-                  <div className="mt-3 h-48 w-full rounded border border-red-100 dark:border-red-900/60 bg-white dark:bg-slate-900 p-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={(account.weeklyTrend || []).map((point) => ({
-                          ...point,
-                          weekLabel: getWeekDateRange(point.week, selectedYear ?? new Date().getFullYear()),
-                        }))}
-                        margin={{ top: 6, right: 8, left: -8, bottom: 2 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="weekLabel" tick={{ fontSize: 10 }} />
-                        <YAxis tick={{ fontSize: 10 }} />
-                        <Tooltip
-                          formatter={(value: number) => [value, "Leads"]}
-                          labelFormatter={(label, payload) => {
-                            const status = payload?.[0]?.payload?.status || "-";
-                            return `${label} | ${status}`;
-                          }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="leads"
-                          stroke="#dc2626"
-                          strokeWidth={2}
-                          dot={{ r: 2 }}
-                          activeDot={{ r: 4 }}
-                          name="Leads"
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="border border-gray-200 dark:border-slate-700 rounded-md p-4 text-sm text-gray-500 dark:text-slate-400">
-              No accounts match your current criteria.
-            </div>
-          )}
-        </div>
-      </div>
-      )}
-    </div>
+    </>
   );
 }

@@ -16,6 +16,13 @@ import { getWeekDateRange } from "@/lib/week";
 
 type Status = "active" | "onboarding" | "engagement only" | "paused";
 
+const statusColorMap: Record<Status, string> = {
+  active: "#2563eb",
+  onboarding: "#a855f7",
+  "engagement only": "#facc15",
+  paused: "#dc2626",
+};
+
 interface ClientChartProps {
   clientName: string;
   weeklyData: Record<number, number>;
@@ -80,6 +87,9 @@ export default function ClientChart({
     );
   }
 
+  const latestStatus = chartData[chartData.length - 1]?.status ?? "active";
+  const lineColor = statusColorMap[latestStatus];
+
   return (
     <div className="p-4 bg-gray-50 dark:bg-slate-900">
       <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-3">
@@ -136,7 +146,7 @@ export default function ClientChart({
           <Line
             type="monotone"
             dataKey="leads"
-            stroke="#2563eb"
+            stroke={lineColor}
             strokeWidth={2}
             dot={(props: any) => {
               const { cx, cy, payload } = props;
@@ -154,9 +164,9 @@ export default function ClientChart({
                   />
                 );
               }
-              return <circle key={dotKey} cx={cx} cy={cy} r={4} fill="#2563eb" />;
+              return <circle key={dotKey} cx={cx} cy={cy} r={4} fill={lineColor} />;
             }}
-            activeDot={{ r: 6 }}
+            activeDot={{ r: 6, fill: lineColor, stroke: lineColor }}
             name="Leads"
           />
         </LineChart>
