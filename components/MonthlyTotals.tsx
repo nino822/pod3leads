@@ -196,6 +196,10 @@ export default function MonthlyTotals({
 
   const effectiveGraphMode: GraphMode = showAllYears ? "monthly" : graphMode;
 
+  const currentCalendarYear = new Date().getFullYear();
+  const maxWeekForSelectedYear =
+    selectedYear === currentCalendarYear ? currentWeek : undefined;
+
   const chartData = useMemo<ChartPoint[]>(() => {
     if (showAllYears) {
       return allYearsData.map((item) => ({
@@ -206,7 +210,11 @@ export default function MonthlyTotals({
     }
 
     if (effectiveGraphMode === "weekly") {
-      return aggregateWeeklyFromWeeklyData(weeklyData, currentWeek, selectedYear);
+      return aggregateWeeklyFromWeeklyData(
+        weeklyData,
+        maxWeekForSelectedYear,
+        selectedYear
+      );
     }
 
     return totals.map((item) => ({
@@ -227,8 +235,13 @@ export default function MonthlyTotals({
   );
 
   const weeklyLeadSummaries = useMemo(
-    () => computeWeeklyLeadSummaries(weeklyData, currentWeek, selectedYear),
-    [weeklyData, currentWeek, selectedYear]
+    () =>
+      computeWeeklyLeadSummaries(
+        weeklyData,
+        maxWeekForSelectedYear,
+        selectedYear
+      ),
+    [weeklyData, maxWeekForSelectedYear, selectedYear]
   );
 
   const latestWeekNumber = weeklyLeadSummaries.length
