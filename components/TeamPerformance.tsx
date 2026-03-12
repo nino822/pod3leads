@@ -88,6 +88,7 @@ type LowLeadAccount = {
   consecutiveWeeks: number;
   noLeadDays: number;
   weeklyData: WeeklyClientData;
+  lastLeadLabel: string;
 };
 
 type LineConfig = {
@@ -121,7 +122,7 @@ export default function TeamPerformance({
     minAvgLeadsPerWeek: "",
     onlyLowerThanPrevious: true,
   });
-  const [lowLeadThreshold, setLowLeadThreshold] = useState(0);
+  const [minNoLeadDays, setMinNoLeadDays] = useState(3);
   const [lowLeadStatusFilter, setLowLeadStatusFilter] = useState<Record<ActivityStatus, boolean>>({
     active: true,
     "engagement only": true,
@@ -322,7 +323,7 @@ export default function TeamPerformance({
     }, [weekSeries, lineConfigs, weeklyTrendMap, resolvedYear]);
 
   const lowLeadAccounts = useMemo(() => {
-    const threshold = Number(lowLeadThreshold) || 0;
+    const daysFilter = minNoLeadDays === 0 ? 3 : minNoLeadDays;
     const entries: LowLeadAccount[] = [];
     weeklyData.forEach((client) => {
       const weekEntries = Object.entries(client.weeks)
@@ -337,31 +338,42 @@ export default function TeamPerformance({
       const latestStatus: ActivityStatus | undefined =
         rawStatus === "active" || rawStatus === "engagement only" ? rawStatus : undefined;
       if (!latestStatus || !lowLeadStatusFilter[latestStatus]) return;
-      if (latestEntry.leads > threshold) return;
-
       let consecutiveWeeks = 0;
       for (let i = weekEntries.length - 1; i >= 0; i--) {
-        if (weekEntries[i].leads <= threshold) {
+        if (weekEntries[i].leads === 0) {
           consecutiveWeeks++;
         } else {
           break;
         }
       }
       const noLeadDays = consecutiveWeeks * 7;
+      if (noLeadDays < daysFilter) return;
+      const trimmedLength = Math.max(0, weekEntries.length - consecutiveWeeks);
+      const lastLeadCandidates = weekEntries
+        .slice(0, trimmedLength)
+        .reverse();
+      const lastLeadEntry =
+        lastLeadCandidates.find((entry) => entry.leads > 0) || weekEntries[0];
+      const lastLeadLabel = lastLeadEntry
+        ? getWeekDateRange(lastLeadEntry.week, selectedYear ?? new Date().getFullYear())
+        : "N/A";
+      const latestLeads = latestEntry.leads;
+      if (latestLeads > 0) return;
 
       entries.push({
         client: client.client,
         status: latestStatus,
         latestWeek: latestEntry.week,
-        latestLeads: latestEntry.leads,
+        latestLeads,
         consecutiveWeeks,
         noLeadDays,
         weeklyData: client,
+        lastLeadLabel,
       });
     });
 
     return entries.sort((a, b) => b.consecutiveWeeks - a.consecutiveWeeks);
-  }, [weeklyData, lowLeadThreshold, lowLeadStatusFilter]);
+  }, [weeklyData, minNoLeadDays, lowLeadStatusFilter, selectedYear]);
 
   const handleCriteriaNumberChange = (
     key: "minAvgLeadsPerWeek",
@@ -757,20 +769,26 @@ export default function TeamPerformance({
             <div>
               <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Low-lead accounts</p>
               <p className="text-xs text-gray-500 dark:text-slate-400">
-                Shows active/engagement clients whose latest week had ≤ threshold leads.
+                Shows active/engagement clients with no leads for a minimum number of days.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-slate-300">
               <label className="inline-flex items-center gap-1">
-                <span>Threshold</span>
+                <span>Min days no leads</span>
                 <input
                   type="number"
                   min={0}
-                  value={lowLeadThreshold}
-                  onChange={(event) => setLowLeadThreshold(Number(event.target.value))}
+                  value={minNoLeadDays}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    setMinNoLeadDays(Number.isNaN(value) ? 0 : value);
+                  }}
                   className="w-16 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-gray-900 dark:text-slate-100"
                 />
               </label>
+              <span className="text-[11px] text-gray-500 dark:text-slate-400">
+                0 = default to 3 days
+              </span>
               <label className="inline-flex items-center gap-1">
                 <input
                   type="checkbox"
@@ -800,39 +818,49 @@ export default function TeamPerformance({
           </div>
           {lowLeadAccounts.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {lowLeadAccounts.map((account) => (
-                <div
-                  key={account.client}
-                  className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 p-3"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{account.client}</p>
-                      <p className="text-xs text-gray-500 dark:text-slate-400">
-                        Status: {account.status}
-                      </p>
+              {lowLeadAccounts.map((account) => {
+                const graphHeightClass = account.latestLeads === 0 ? "h-28" : "h-40";
+                const lastLeadText =
+                  account.lastLeadLabel && account.lastLeadLabel !== "N/A"
+                    ? account.lastLeadLabel
+                    : "No prior leads";
+                return (
+                  <div
+                    key={account.client}
+                    className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">{account.client}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">
+                          Status: {account.status}
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-semibold uppercase text-blue-700 dark:text-blue-300">
+                        {account.consecutiveWeeks}w {account.noLeadDays}d
+                      </span>
                     </div>
-                    <span className="text-[11px] font-semibold uppercase text-blue-700 dark:text-blue-300">
-                      {account.consecutiveWeeks}w {account.noLeadDays}d
-                    </span>
+                    <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
+                      No leads for {account.noLeadDays} days. Last lead: {lastLeadText}.
+                    </p>
+                    <div className="mt-3">
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400 mb-1">Weekly trend</p>
+                      <div className={`${graphHeightClass}`}>
+                        <ClientChart
+                          clientName={account.client}
+                          weeklyData={account.weeklyData.weeks}
+                          statusByWeek={account.weeklyData.statusByWeek}
+                          posterByWeek={account.weeklyData.posterByWeek}
+                          currentPoster={account.weeklyData.currentPoster}
+                          firstSeenWeek={account.weeklyData.firstSeenWeek}
+                          currentWeek={account.latestWeek}
+                          year={selectedYear}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-2 text-xs text-gray-500 dark:text-slate-400">
-                    Latest week: {getWeekDateRange(account.latestWeek, selectedYear ?? new Date().getFullYear())} — {account.latestLeads} leads
-                  </div>
-                  <div className="mt-3 h-40">
-                    <ClientChart
-                      clientName={account.client}
-                      weeklyData={account.weeklyData.weeks}
-                      statusByWeek={account.weeklyData.statusByWeek}
-                      posterByWeek={account.weeklyData.posterByWeek}
-                      currentPoster={account.weeklyData.currentPoster}
-                      firstSeenWeek={account.weeklyData.firstSeenWeek}
-                      currentWeek={account.latestWeek}
-                      year={selectedYear}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-xs text-gray-500 dark:text-slate-400">
