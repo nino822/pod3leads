@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     const { leads, monthlyLeads } = parseSheetData(sheetData, year);
     const currentWeek = getCurrentDashboardWeek(new Date());
     const weeklyByClient = getWeeklyDataByClient(leads);
-    const podStats = calculatePodStats(leads, monthlyLeads);
+    const podStats = calculatePodStats(leads, monthlyLeads, weeklyByClient);
     const monthlyTotals = getMonthlyTotals(leads, monthlyLeads);
     const teamPerformance = getTeamPerformance(leads);
     const atRiskAccounts = getAtRiskAccounts(leads);

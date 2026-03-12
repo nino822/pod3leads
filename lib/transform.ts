@@ -338,7 +338,11 @@ export function aggregateByMonthly(leads: Lead[]): Map<string, AggregatedLead> {
   return aggregated;
 }
 
-export function calculatePodStats(leads: Lead[], monthlyLeads?: MonthlyLeadsMap): PodStats {
+export function calculatePodStats(
+  leads: Lead[],
+  monthlyLeads?: MonthlyLeadsMap,
+  weeklyData?: WeeklyClientData[]
+): PodStats {
   if (!leads.length) {
     return {
       weekly: 0,
@@ -360,20 +364,34 @@ export function calculatePodStats(leads: Lead[], monthlyLeads?: MonthlyLeadsMap)
 
   let weeklyTotal = 0;
   let monthlyTotal = 0;
-  const latestStatusByClient = new Map<string, { week: number; status: Lead["status"] }>();
+  let activeClientsSet: Set<string>;
 
-  leads.forEach((lead) => {
-    const current = latestStatusByClient.get(lead.client);
-    if (!current || lead.week > current.week) {
-      latestStatusByClient.set(lead.client, { week: lead.week, status: lead.status });
-    }
-  });
+  if (weeklyData && weeklyData.length > 0) {
+    activeClientsSet = new Set();
+    weeklyData.forEach((client) => {
+      const hasWeekEntry = client.weeks[targetWeek] !== undefined;
+      if (!hasWeekEntry) return;
+      const statusAtWeek = client.statusByWeek?.[targetWeek] ?? client.status;
+      if (statusAtWeek === "active" || statusAtWeek === "engagement only") {
+        activeClientsSet.add(client.client);
+      }
+    });
+  } else {
+    const latestStatusByClient = new Map<string, { week: number; status: Lead["status"] }>();
 
-  const activeClientsSet = new Set(
-    Array.from(latestStatusByClient.entries())
-      .filter(([, value]) => value.status === "active" || value.status === "engagement only")
-      .map(([client]) => client)
-  );
+    leads.forEach((lead) => {
+      const current = latestStatusByClient.get(lead.client);
+      if (!current || lead.week > current.week) {
+        latestStatusByClient.set(lead.client, { week: lead.week, status: lead.status });
+      }
+    });
+
+    activeClientsSet = new Set(
+      Array.from(latestStatusByClient.entries())
+        .filter(([, value]) => value.status === "active" || value.status === "engagement only")
+        .map(([client]) => client)
+    );
+  }
 
   leads.forEach((lead) => {
     if (lead.week === targetWeek) {
