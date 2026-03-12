@@ -332,14 +332,30 @@ export default function TeamPerformance({
       if (weekEntries.length === 0) return;
 
       const latestEntry = weekEntries[weekEntries.length - 1];
-      const rawStatus =
+      const rawLatestStatus =
         (client.statusByWeek?.[latestEntry.week] as ActivityStatus | undefined) ?? client.status;
       const latestStatus: ActivityStatus | undefined =
-        rawStatus === "active" || rawStatus === "engagement only" ? rawStatus : undefined;
+        rawLatestStatus === "active" || rawLatestStatus === "engagement only" ? rawLatestStatus : undefined;
       if (!latestStatus || !lowLeadStatusFilter[latestStatus]) return;
+
+      const activeWeeks = weekEntries.filter((entry) => {
+        const statusAtWeek =
+          (client.statusByWeek?.[entry.week] as ActivityStatus | undefined) ?? client.status;
+        return statusAtWeek === "active" || statusAtWeek === "engagement only";
+      });
+      if (activeWeeks.length === 0) return;
+      const firstActiveWeek = activeWeeks[0].week;
+
       let consecutiveWeeks = 0;
       for (let i = weekEntries.length - 1; i >= 0; i--) {
-        if (weekEntries[i].leads === 0) {
+        const entry = weekEntries[i];
+        if (entry.week < firstActiveWeek) break;
+        const statusAtWeek =
+          (client.statusByWeek?.[entry.week] as ActivityStatus | undefined) ?? client.status;
+        if (statusAtWeek !== "active" && statusAtWeek !== "engagement only") {
+          break;
+        }
+        if (entry.leads === 0) {
           consecutiveWeeks++;
         } else {
           break;

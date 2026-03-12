@@ -251,11 +251,17 @@ export function parseSheetData(
       );
     }
 
+    const referenceDate =
+      overlappingDates.find((entry) => entry.date.getFullYear() === year)?.date ??
+      overlappingDates[0]?.date ??
+      weekStart;
+    const monthLabel = referenceDate ? format(referenceDate, "MMMM") : format(weekStart, "MMMM");
+
     const leadRecord: Lead = {
       client: clientName,
       date: format(new Date(), "yyyy-MM-dd"),
       week: weekNumber,
-      month: getWeekMonth(weekNumber, year),
+      month: monthLabel,
       year: year, // Use the provided year parameter
       leads: weeklyLeads,
       status,
@@ -266,6 +272,7 @@ export function parseSheetData(
     currentHeaderDates.forEach((column) => {
       const value = parseInt(row[column.index]) || 0;
       if (value <= 0) return;
+      if (column.date.getFullYear() !== year) return;
       const monthLabel = format(column.date, "MMMM");
       addMonthlyLead(clientName, monthLabel, value);
     });
