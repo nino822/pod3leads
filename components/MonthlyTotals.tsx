@@ -117,6 +117,8 @@ const monthShort: Record<string, string> = {
   December: "Dec",
 };
 
+const availableYears = [2024, 2025, 2026];
+
 function aggregateWeeklyFromWeeklyData(
   weeklyData: WeeklyClientData[],
   maxWeek?: number,
@@ -329,8 +331,11 @@ export default function MonthlyTotals({
               className="border border-gray-300 dark:border-slate-600 rounded px-2 py-1 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
               disabled={showAllYears}
             >
-              <option value={2025}>2025</option>
-              <option value={2026}>2026</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
             </select>
           </label>
           <label className="text-sm text-gray-700 dark:text-slate-300 flex items-center gap-2">
