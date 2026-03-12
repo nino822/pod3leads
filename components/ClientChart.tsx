@@ -89,13 +89,13 @@ export default function ClientChart({
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={chartData}>
           {onboardingRanges.map((weekLabel) => (
-            <ReferenceArea
-              key={`onboarding-${weekLabel}`}
-              x1={weekLabel}
-              x2={weekLabel}
-              fill="#dbeafe"
-              fillOpacity={0.8}
-            />
+          <ReferenceArea
+            key={`onboarding-${weekLabel}`}
+            x1={weekLabel}
+            x2={weekLabel}
+            fill="#ede9fe"
+            fillOpacity={0.8}
+          />
           ))}
 
           <ReferenceLine
@@ -162,7 +162,7 @@ export default function ClientChart({
         </LineChart>
       </ResponsiveContainer>
       <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
-        Purple marker = first week appeared, blue shaded weeks = onboarding.
+        Purple marker = first week appeared, violet shaded weeks = onboarding.
       </p>
     </div>
   );

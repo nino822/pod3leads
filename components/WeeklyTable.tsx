@@ -582,13 +582,13 @@ export default function WeeklyTable({
                         <button
                           onClick={() => toggleStatus(client.client, displayStatus)}
                           className={`inline-block px-3 py-1 rounded-full text-sm font-semibold cursor-pointer transition-all hover:scale-105 ${
-                            displayStatus === "active"
-                              ? "bg-green-100 text-green-800 hover:bg-green-200"
-                              : displayStatus === "onboarding"
-                              ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                              : displayStatus === "engagement only"
-                              ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                              : "bg-red-100 text-red-800 hover:bg-red-200"
+                        displayStatus === "active"
+                          ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                          : displayStatus === "onboarding"
+                          ? "bg-violet-100 text-violet-800 hover:bg-violet-200"
+                          : displayStatus === "engagement only"
+                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                          : "bg-red-100 text-red-800 hover:bg-red-200"
                           }`}
                           title="Click to cycle status"
                         >
