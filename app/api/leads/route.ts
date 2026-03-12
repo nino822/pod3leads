@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
     const rangeCandidates =
       year === 2025
         ? ["Leads Tracking 2025!A:AM", "2025 Leads Tracking!A:AM", "Leads Tracking!A:AM"]
+        : year === 2024
+        ? ["Leads Tracking 2024!A:AM", "Leads Tracking!A:AM"]
         : ["Leads Tracking!A:AM", `Leads Tracking ${year}!A:AM`];
 
     let sheetData: any[] = [];

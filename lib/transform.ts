@@ -79,9 +79,9 @@ function parsePosterAndCopywriter(
   let poster = rawC;
   let copywriter = rawD;
 
-  // 2025 legacy format: C could be "Joiner | Poster | Copywriter".
+  // 2024/2025 legacy format: C could be "Joiner | Poster | Copywriter".
   // We ignore joiner and keep poster/copywriter when present.
-  if (year === 2025 && rawC && rawC.includes("|")) {
+  if (year <= 2025 && rawC && rawC.includes("|")) {
     const parts = rawC
       .split("|")
       .map((part) => part.trim())
