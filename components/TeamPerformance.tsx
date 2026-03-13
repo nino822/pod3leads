@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { getWeekDateRange } from "@/lib/week";
+import { getWeekDateRange, getWeekEndDate, getWeekStartDate, getWeekNumberForDate } from "@/lib/week";
 import { AnimatePresence, motion } from "framer-motion";
 import ContributorAverageChart from "./ContributorAverageChart";
 import {
@@ -34,6 +34,8 @@ const slugifyClientName = (value: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 type ContributorPerformance = {
   name: string;
@@ -93,6 +95,7 @@ type LowLeadAccount = {
   latestLeads: number;
   consecutiveWeeks: number;
   noLeadDays: number;
+  displayWeeks: number;
   weeklyData: WeeklyClientData;
   lastLeadLabel: string;
 };
@@ -362,7 +365,10 @@ export default function TeamPerformance({
 
   const lowLeadAccounts = useMemo(() => {
     const daysFilter = minNoLeadDays === 0 ? 1 : minNoLeadDays;
+    const now = new Date();
+    const nowWeek = getWeekNumberForDate(now);
     const entries: LowLeadAccount[] = [];
+
     weeklyData.forEach((client) => {
       const weekEntries = Object.entries(client.weeks)
         .map(([week, leads]) => ({ week: Number(week), leads }))
@@ -400,8 +406,7 @@ export default function TeamPerformance({
           break;
         }
       }
-      const noLeadDays = consecutiveWeeks * 7;
-      if (noLeadDays < daysFilter) return;
+
       const trimmedLength = Math.max(0, weekEntries.length - consecutiveWeeks);
       const lastLeadCandidates = weekEntries
         .slice(0, trimmedLength)
@@ -416,8 +421,27 @@ export default function TeamPerformance({
       const lastLeadLabel = lastLeadEntry
         ? getWeekDateRange(lastLeadEntry.week, selectedYear ?? new Date().getFullYear())
         : "No leads since activation";
+
       const latestLeads = latestEntry.leads;
       if (latestLeads > 0) return;
+
+      const isCurrentYear = resolvedYear === now.getFullYear();
+      const referenceDate =
+        isCurrentYear && latestEntry.week === nowWeek
+          ? now
+          : getWeekEndDate(latestEntry.week, resolvedYear);
+
+      const lastLeadReferenceDate = lastLeadEntry
+        ? getWeekEndDate(lastLeadEntry.week, resolvedYear)
+        : getWeekStartDate(firstActiveWeek, resolvedYear);
+
+      const rawNoLeadDays = Math.max(
+        0,
+        Math.floor((referenceDate.getTime() - lastLeadReferenceDate.getTime()) / MS_PER_DAY)
+      );
+      const noLeadDays = Math.max(1, rawNoLeadDays);
+      const displayWeeks = Math.max(1, Math.ceil(noLeadDays / 7));
+      if (noLeadDays < daysFilter) return;
 
       entries.push({
         client: client.client,
@@ -425,14 +449,15 @@ export default function TeamPerformance({
         latestWeek: latestEntry.week,
         latestLeads,
         consecutiveWeeks,
+        displayWeeks,
         noLeadDays,
         weeklyData: client,
         lastLeadLabel,
       });
     });
 
-    return entries.sort((a, b) => b.consecutiveWeeks - a.consecutiveWeeks);
-  }, [weeklyData, minNoLeadDays, lowLeadStatusFilter, selectedYear]);
+    return entries.sort((a, b) => b.noLeadDays - a.noLeadDays || b.consecutiveWeeks - a.consecutiveWeeks);
+  }, [weeklyData, minNoLeadDays, lowLeadStatusFilter, selectedYear, resolvedYear]);
 
   const handleCriteriaNumberChange = (
     key: "minAvgLeadsPerWeek",
@@ -997,7 +1022,7 @@ export default function TeamPerformance({
                             </span>
                           </div>
                           <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
-                            No leads {account.noLeadDays} days ({account.consecutiveWeeks} weeks)
+                            No leads {account.noLeadDays} days ({account.displayWeeks} weeks)
                           </span>
                         </div>
                         <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">Last lead: {lastLeadText}.</p>
