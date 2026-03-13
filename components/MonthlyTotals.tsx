@@ -235,7 +235,11 @@ export default function MonthlyTotals({
   }, [weeklyData]);
 
   const maxWeekForSelectedYear =
-    selectedYear === currentCalendarYear ? Math.max(currentWeek ?? 0, maxWeekFromData) : maxWeekFromData || undefined;
+    maxWeekFromData > 0
+      ? maxWeekFromData
+      : selectedYear === currentCalendarYear
+        ? currentWeek
+        : undefined;
 
   const chartData = useMemo<ChartPoint[]>(() => {
     if (showAllYears) {
@@ -366,6 +370,7 @@ export default function MonthlyTotals({
     const clients = new Set<string>();
 
     weeklyData.forEach((client) => {
+      if (!Object.prototype.hasOwnProperty.call(client.weeks, week)) return;
       const leads = client.weeks[week] ?? 0;
       const statusAtWeek = client.statusByWeek?.[week] ?? client.status;
       if (statusAtWeek === "active" || statusAtWeek === "engagement only") {
