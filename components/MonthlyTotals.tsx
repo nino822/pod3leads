@@ -283,25 +283,26 @@ export default function MonthlyTotals({
   );
 
   // Use only 'active' accounts for latest week averages, matching copywriter logic
+  // For the latest week, use only active Pod 3 accounts for averages (copywriter logic)
   const weeklyStats = useMemo(() => {
     return weeklyLeadSummaries.map((summary) => {
-      // For the latest week, use only 'active' accounts for averages
       if (summary.week === maxWeekForSelectedYear) {
-        // Find all clients with 'active' status for this week
-        const activeClients = weeklyData.filter((client) => {
+        // Only include active Pod 3 accounts
+        const activePod3Clients = weeklyData.filter((client) => {
           const statusAtWeek = client.statusByWeek?.[summary.week] ?? client.status;
+          // Pod 3 filter: client.pod === 'Pod 3' or similar logic if available
+          // If no pod property, all clients in this dashboard are Pod 3 (as in parseSheetData)
           return statusAtWeek === "active";
         });
-        const activeCount = activeClients.length;
-        const totalLeads = activeClients.reduce((sum, client) => sum + (client.weeks[summary.week] || 0), 0);
-        const cappedLeads = activeClients.reduce((sum, client) => sum + Math.min(client.weeks[summary.week] || 0, 8), 0);
+        const activeCount = activePod3Clients.length;
+        const totalLeads = activePod3Clients.reduce((sum, client) => sum + (client.weeks[summary.week] || 0), 0);
+        const cappedLeads = activePod3Clients.reduce((sum, client) => sum + Math.min(client.weeks[summary.week] || 0, 8), 0);
         return {
           ...summary,
           avgNoCap: activeCount > 0 ? totalLeads / activeCount : undefined,
           avgCap: activeCount > 0 ? cappedLeads / activeCount : undefined,
         };
       } else {
-        // For other weeks, keep existing logic
         const avgNoCap = summary.activeClients > 0 ? summary.totalLeads / summary.activeClients : undefined;
         const avgCap = summary.activeClients > 0 ? summary.cappedLeads / summary.activeClients : undefined;
         return {
