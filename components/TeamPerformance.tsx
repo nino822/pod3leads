@@ -233,34 +233,45 @@ export default function TeamPerformance({
   // Pod 3 overall latest week avg (no cap) and (cap 8)
   const getPod3LatestWeekAverages = () => {
     if (!weeklyData || weeklyData.length === 0) return { avgNoCap: undefined, avgCap: undefined, count: 0 };
-    // Find the maximum week number present in any client
-    let maxWeek = 0;
+    // Gather all week numbers across all clients
+    const allWeeks = new Set<number>();
     weeklyData.forEach((client) => {
       Object.keys(client.weeks).forEach((weekKey) => {
         const week = Number(weekKey);
-        if (!Number.isFinite(week)) return;
-        maxWeek = Math.max(maxWeek, week);
+        if (Number.isFinite(week)) allWeeks.add(week);
       });
     });
-    if (!maxWeek) return { avgNoCap: undefined, avgCap: undefined, count: 0 };
-    // Collect all active accounts for that week
+    const sortedWeeks = Array.from(allWeeks).sort((a, b) => b - a); // descending
+    let foundWeek: number | undefined = undefined;
+    for (const week of sortedWeeks) {
+      // Find active clients for this week
+      const activeClients = weeklyData.filter((client) => {
+        const statusAtWeek = client.statusByWeek?.[week] ?? client.status;
+        return statusAtWeek === "active";
+      });
+      // If any active client has leads > 0, use this week
+      if (activeClients.some((client) => (client.weeks[week] || 0) > 0)) {
+        foundWeek = week;
+        break;
+      }
+    }
+    if (!foundWeek) return { avgNoCap: undefined, avgCap: undefined, count: 0 };
     const activeClients = weeklyData.filter((client) => {
-      const statusAtWeek = client.statusByWeek?.[maxWeek] ?? client.status;
+      const statusAtWeek = client.statusByWeek?.[foundWeek!] ?? client.status;
       return statusAtWeek === "active";
     });
-    // Debug log: print latest week and leads for each active account
+    // Debug log: print chosen week and leads for each active account
     if (typeof window !== 'undefined') {
-      // Only log in browser
       // eslint-disable-next-line no-console
-      console.log('[Pod3 Debug] Latest week:', maxWeek);
+      console.log('[Pod3 Debug] Chosen week:', foundWeek);
       activeClients.forEach((client) => {
         // eslint-disable-next-line no-console
-        console.log(`[Pod3 Debug] Client: ${client.client}, Leads:`, client.weeks[maxWeek]);
+        console.log(`[Pod3 Debug] Client: ${client.client}, Leads:`, client.weeks[foundWeek!]);
       });
     }
     const activeCount = activeClients.length;
-    const totalLeads = activeClients.reduce((sum, client) => sum + (client.weeks[maxWeek] || 0), 0);
-    const cappedLeads = activeClients.reduce((sum, client) => sum + Math.min(client.weeks[maxWeek] || 0, 8), 0);
+    const totalLeads = activeClients.reduce((sum, client) => sum + (client.weeks[foundWeek!] || 0), 0);
+    const cappedLeads = activeClients.reduce((sum, client) => sum + Math.min(client.weeks[foundWeek!] || 0, 8), 0);
     return {
       avgNoCap: activeCount > 0 ? totalLeads / activeCount : undefined,
       avgCap: activeCount > 0 ? cappedLeads / activeCount : undefined,
