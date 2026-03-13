@@ -221,8 +221,21 @@ export default function MonthlyTotals({
   const effectiveGraphMode: GraphMode = showAllYears ? "monthly" : graphMode;
 
   const currentCalendarYear = new Date().getFullYear();
+  const maxWeekFromData = useMemo(() => {
+    let maxWeek = 0;
+    weeklyData.forEach((client) => {
+      Object.keys(client.weeks).forEach((weekKey) => {
+        const week = Number(weekKey);
+        if (Number.isFinite(week) && week > maxWeek) {
+          maxWeek = week;
+        }
+      });
+    });
+    return maxWeek;
+  }, [weeklyData]);
+
   const maxWeekForSelectedYear =
-    selectedYear === currentCalendarYear ? currentWeek : undefined;
+    selectedYear === currentCalendarYear ? Math.max(currentWeek ?? 0, maxWeekFromData) : maxWeekFromData || undefined;
 
   const chartData = useMemo<ChartPoint[]>(() => {
     if (showAllYears) {
