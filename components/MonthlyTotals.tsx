@@ -282,21 +282,36 @@ export default function MonthlyTotals({
     [weeklyData, maxWeekForSelectedYear, selectedYear]
   );
 
-  const weeklyStats = useMemo(
-    () =>
-      weeklyLeadSummaries.map((summary) => {
-        const avgNoCap =
-          summary.activeClients > 0 ? summary.totalLeads / summary.activeClients : undefined;
-        const avgCap =
-          summary.activeClients > 0 ? summary.cappedLeads / summary.activeClients : undefined;
+  // Use only 'active' accounts for latest week averages, matching copywriter logic
+  const weeklyStats = useMemo(() => {
+    return weeklyLeadSummaries.map((summary) => {
+      // For the latest week, use only 'active' accounts for averages
+      if (summary.week === maxWeekForSelectedYear) {
+        // Find all clients with 'active' status for this week
+        const activeClients = weeklyData.filter((client) => {
+          const statusAtWeek = client.statusByWeek?.[summary.week] ?? client.status;
+          return statusAtWeek === "active";
+        });
+        const activeCount = activeClients.length;
+        const totalLeads = activeClients.reduce((sum, client) => sum + (client.weeks[summary.week] || 0), 0);
+        const cappedLeads = activeClients.reduce((sum, client) => sum + Math.min(client.weeks[summary.week] || 0, 8), 0);
+        return {
+          ...summary,
+          avgNoCap: activeCount > 0 ? totalLeads / activeCount : undefined,
+          avgCap: activeCount > 0 ? cappedLeads / activeCount : undefined,
+        };
+      } else {
+        // For other weeks, keep existing logic
+        const avgNoCap = summary.activeClients > 0 ? summary.totalLeads / summary.activeClients : undefined;
+        const avgCap = summary.activeClients > 0 ? summary.cappedLeads / summary.activeClients : undefined;
         return {
           ...summary,
           avgNoCap,
           avgCap,
         };
-      }),
-    [weeklyLeadSummaries]
-  );
+      }
+    });
+  }, [weeklyLeadSummaries, weeklyData, maxWeekForSelectedYear]);
 
   const monthlyStats = useMemo(() => {
     const grouped = new Map<
