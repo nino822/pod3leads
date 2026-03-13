@@ -532,6 +532,20 @@ export default function TeamPerformance({
   return (
     <>
       <div id="team-performance-section" className="bg-white dark:bg-slate-900 rounded-lg shadow p-4 border border-transparent dark:border-slate-700">
+        {/* Pod 3 summary box styled like the dashboard averages */}
+        <div className="flex flex-wrap gap-4 mb-4">
+          <div className="flex-1 min-w-[220px] bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4 flex flex-col items-start justify-center shadow-sm">
+            <div className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-1">LATEST WEEK AVG (NO CAP)</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1">{pod3Latest.avgNoCap !== undefined ? pod3Latest.avgNoCap.toFixed(2) : '-'}</div>
+            <div className="text-xs text-gray-500 dark:text-slate-400">Active accounts: {pod3Latest.count}</div>
+          </div>
+          <div className="flex-1 min-w-[220px] bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4 flex flex-col items-start justify-center shadow-sm">
+            <div className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-1">LATEST WEEK AVG (CAP 8 LEADS/CLIENT)</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1">{pod3Latest.avgCap !== undefined ? pod3Latest.avgCap.toFixed(2) : '-'}</div>
+            <div className="text-xs text-gray-500 dark:text-slate-400">Cap per client: 8 leads</div>
+            <div className="text-xs text-gray-500 dark:text-slate-400">Active accounts: {pod3Latest.count}</div>
+          </div>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Team Performance</h3>
           <div className="flex flex-wrap items-center gap-2">
@@ -700,13 +714,6 @@ export default function TeamPerformance({
               </tr>
             </thead>
             <tbody>
-              {/* Pod 3 overall averages row */}
-              <tr className="bg-gray-100 dark:bg-slate-800">
-                <td className="py-1 px-2 text-left font-semibold text-gray-900 dark:text-slate-100" colSpan={2}>Pod 3 Lead Avg (all active)</td>
-                <td className="py-1 px-2 text-right font-semibold text-gray-900 dark:text-slate-100">{pod3Latest.avgNoCap !== undefined ? pod3Latest.avgNoCap.toFixed(2) : '-'}</td>
-                <td className="py-1 px-2 text-right font-semibold text-gray-900 dark:text-slate-100">{pod3Latest.avgCap !== undefined ? pod3Latest.avgCap.toFixed(2) : '-'}</td>
-                <td className="py-1 px-2 text-right font-semibold text-gray-900 dark:text-slate-100" colSpan={5}>Active accounts: {pod3Latest.count}</td>
-              </tr>
               {tableRows.map((row) => {
                 const rowKey = `${tab}:${row.name}`;
                 const isExpanded = expandedContributors.has(rowKey);
