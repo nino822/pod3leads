@@ -344,7 +344,38 @@ export default function MonthlyTotals({
 
   const summaryLabelForMode = effectiveGraphMode === "weekly" ? "Week" : "Month";
   const modeSummaries = effectiveGraphMode === "weekly" ? weeklyStats : monthlyStats;
-  const latestSummary = modeSummaries[modeSummaries.length - 1];
+  const fallbackCurrentWeekSummary = useMemo(() => {
+    if (effectiveGraphMode !== "weekly") return null;
+    if (typeof maxWeekForSelectedYear !== "number") return null;
+    const week = maxWeekForSelectedYear;
+    let totalLeads = 0;
+    let cappedLeads = 0;
+    const clients = new Set<string>();
+
+    weeklyData.forEach((client) => {
+      const leads = client.weeks[week] ?? 0;
+      const statusAtWeek = client.statusByWeek?.[week] ?? client.status;
+      if (statusAtWeek === "active" || statusAtWeek === "engagement only") {
+        totalLeads += leads;
+        cappedLeads += Math.min(leads, 8);
+        clients.add(client.client);
+      }
+    });
+
+    if (clients.size === 0) return null;
+    return {
+      week,
+      label: getWeekDateRange(week, selectedYear),
+      totalLeads,
+      cappedLeads,
+      activeClients: clients.size,
+      avgNoCap: totalLeads / clients.size,
+      avgCap: cappedLeads / clients.size,
+    };
+  }, [effectiveGraphMode, maxWeekForSelectedYear, weeklyData, selectedYear]);
+
+  const latestSummaryBase = modeSummaries[modeSummaries.length - 1];
+  const latestSummary = fallbackCurrentWeekSummary ?? latestSummaryBase;
   const previousSummaries = modeSummaries
     .slice(0, -1)
     .reverse();
