@@ -287,16 +287,15 @@ export default function MonthlyTotals({
   const weeklyStats = useMemo(() => {
     return weeklyLeadSummaries.map((summary) => {
       if (summary.week === maxWeekForSelectedYear) {
-        // Only include active Pod 3 accounts
-        const activePod3Clients = weeklyData.filter((client) => {
+        // Only include 'active' accounts for averages
+        const activeClients = weeklyData.filter((client) => {
           const statusAtWeek = client.statusByWeek?.[summary.week] ?? client.status;
-          // Pod 3 filter: client.pod === 'Pod 3' or similar logic if available
-          // If no pod property, all clients in this dashboard are Pod 3 (as in parseSheetData)
           return statusAtWeek === "active";
         });
-        const activeCount = activePod3Clients.length;
-        const totalLeads = activePod3Clients.reduce((sum, client) => sum + (client.weeks[summary.week] || 0), 0);
-        const cappedLeads = activePod3Clients.reduce((sum, client) => sum + Math.min(client.weeks[summary.week] || 0, 8), 0);
+        const activeCount = activeClients.length;
+        const totalLeads = activeClients.reduce((sum, client) => sum + (client.weeks[summary.week] || 0), 0);
+        const cappedLeads = activeClients.reduce((sum, client) => sum + Math.min(client.weeks[summary.week] || 0, 8), 0);
+        // For display, keep the original activeClients count (active + engagement only)
         return {
           ...summary,
           avgNoCap: activeCount > 0 ? totalLeads / activeCount : undefined,
