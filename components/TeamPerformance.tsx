@@ -229,6 +229,39 @@ export default function TeamPerformance({
     });
   };
 
+  // Pod 3 overall latest week avg (no cap) and (cap 8)
+  const getPod3LatestWeekAverages = () => {
+    if (!weeklyData || weeklyData.length === 0) return { avgNoCap: undefined, avgCap: undefined, count: 0 };
+    // Find the latest week number with any active account
+    let maxWeek = 0;
+    weeklyData.forEach((client) => {
+      Object.entries(client.weeks).forEach(([weekKey, leads]) => {
+        const week = Number(weekKey);
+        if (!Number.isFinite(week)) return;
+        const statusAtWeek = client.statusByWeek?.[week] ?? client.status;
+        if (statusAtWeek === "active") {
+          if (leads !== undefined) {
+            maxWeek = Math.max(maxWeek, week);
+          }
+        }
+      });
+    });
+    if (!maxWeek) return { avgNoCap: undefined, avgCap: undefined, count: 0 };
+    // Collect all active accounts for that week
+    const activeClients = weeklyData.filter((client) => {
+      const statusAtWeek = client.statusByWeek?.[maxWeek] ?? client.status;
+      return statusAtWeek === "active";
+    });
+    const activeCount = activeClients.length;
+    const totalLeads = activeClients.reduce((sum, client) => sum + (client.weeks[maxWeek] || 0), 0);
+    const cappedLeads = activeClients.reduce((sum, client) => sum + Math.min(client.weeks[maxWeek] || 0, 8), 0);
+    return {
+      avgNoCap: activeCount > 0 ? totalLeads / activeCount : undefined,
+      avgCap: activeCount > 0 ? cappedLeads / activeCount : undefined,
+      count: activeCount,
+    };
+  };
+  const pod3Latest = getPod3LatestWeekAverages();
   const tableRows = useMemo(() => {
     const rows = tab === "posters" ? data.posters : data.copywriters;
     const normalizedRows = (rows || []).map((row) => ({
@@ -667,6 +700,13 @@ export default function TeamPerformance({
               </tr>
             </thead>
             <tbody>
+              {/* Pod 3 overall averages row */}
+              <tr className="bg-gray-100 dark:bg-slate-800">
+                <td className="py-1 px-2 text-left font-semibold text-gray-900 dark:text-slate-100" colSpan={2}>Pod 3 Lead Avg (all active)</td>
+                <td className="py-1 px-2 text-right font-semibold text-gray-900 dark:text-slate-100">{pod3Latest.avgNoCap !== undefined ? pod3Latest.avgNoCap.toFixed(2) : '-'}</td>
+                <td className="py-1 px-2 text-right font-semibold text-gray-900 dark:text-slate-100">{pod3Latest.avgCap !== undefined ? pod3Latest.avgCap.toFixed(2) : '-'}</td>
+                <td className="py-1 px-2 text-right font-semibold text-gray-900 dark:text-slate-100" colSpan={5}>Active accounts: {pod3Latest.count}</td>
+              </tr>
               {tableRows.map((row) => {
                 const rowKey = `${tab}:${row.name}`;
                 const isExpanded = expandedContributors.has(rowKey);
