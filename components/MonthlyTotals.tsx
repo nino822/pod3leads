@@ -382,11 +382,13 @@ export default function MonthlyTotals({
 
   const latestActiveAccounts =
     latestSummary && "activeClients" in latestSummary
-      ? latestSummary.activeClients
-      : latestSummary?.avgActiveClients ?? 0;
+      ? Math.round(latestSummary.activeClients)
+      : latestSummary?.avgActiveClients
+        ? Math.round(latestSummary.avgActiveClients)
+        : 0;
 
   const formatAverage = (value?: number) =>
-    typeof value === "number" && Number.isFinite(value) ? value.toFixed(1) : "-";
+    typeof value === "number" && Number.isFinite(value) ? value.toFixed(2) : "-";
 
   const isTimelineView = showAllYears && chartData.length > 0;
   const renderTimelineTick = ({ x, y, payload }: { x: number; y: number; payload: { value: string } }) => {
