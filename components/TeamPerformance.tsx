@@ -26,6 +26,7 @@ import {
   YAxis,
 } from "recharts";
 import { WeeklyClientData } from "@/lib/transform";
+import Pod3PreviousWeekAverages from "./Pod3PreviousWeekAverages";
 
 type RoleTab = "posters" | "copywriters";
 
