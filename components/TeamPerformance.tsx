@@ -248,6 +248,16 @@ export default function TeamPerformance({
       const statusAtWeek = client.statusByWeek?.[maxWeek] ?? client.status;
       return statusAtWeek === "active";
     });
+    // Debug log: print latest week and leads for each active account
+    if (typeof window !== 'undefined') {
+      // Only log in browser
+      // eslint-disable-next-line no-console
+      console.log('[Pod3 Debug] Latest week:', maxWeek);
+      activeClients.forEach((client) => {
+        // eslint-disable-next-line no-console
+        console.log(`[Pod3 Debug] Client: ${client.client}, Leads:`, client.weeks[maxWeek]);
+      });
+    }
     const activeCount = activeClients.length;
     const totalLeads = activeClients.reduce((sum, client) => sum + (client.weeks[maxWeek] || 0), 0);
     const cappedLeads = activeClients.reduce((sum, client) => sum + Math.min(client.weeks[maxWeek] || 0, 8), 0);
