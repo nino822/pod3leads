@@ -233,18 +233,13 @@ export default function TeamPerformance({
   // Pod 3 overall latest week avg (no cap) and (cap 8)
   const getPod3LatestWeekAverages = () => {
     if (!weeklyData || weeklyData.length === 0) return { avgNoCap: undefined, avgCap: undefined, count: 0 };
-    // Find the latest week number with any active account
+    // Find the maximum week number present in any client
     let maxWeek = 0;
     weeklyData.forEach((client) => {
-      Object.entries(client.weeks).forEach(([weekKey, leads]) => {
+      Object.keys(client.weeks).forEach((weekKey) => {
         const week = Number(weekKey);
         if (!Number.isFinite(week)) return;
-        const statusAtWeek = client.statusByWeek?.[week] ?? client.status;
-        if (statusAtWeek === "active") {
-          if (leads !== undefined) {
-            maxWeek = Math.max(maxWeek, week);
-          }
-        }
+        maxWeek = Math.max(maxWeek, week);
       });
     });
     if (!maxWeek) return { avgNoCap: undefined, avgCap: undefined, count: 0 };
