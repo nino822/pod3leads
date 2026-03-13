@@ -131,7 +131,8 @@ export default function TeamPerformance({
     minAvgLeadsPerWeek: "",
     onlyLowerThanPrevious: true,
   });
-  const [minNoLeadDays, setMinNoLeadDays] = useState(1);
+  const [minNoLeadDays, setMinNoLeadDays] = useState(0);
+  const [minNoLeadDaysInput, setMinNoLeadDaysInput] = useState("0");
   const [lowLeadStatusFilter, setLowLeadStatusFilter] = useState<Record<ActivityStatus, boolean>>({
     active: true,
     "engagement only": true,
@@ -364,7 +365,7 @@ export default function TeamPerformance({
     const avgPreviousWeek = avgForWeek(previousWeekOnChart);
 
   const lowLeadAccounts = useMemo(() => {
-    const daysFilter = minNoLeadDays === 0 ? 1 : minNoLeadDays;
+    const daysFilter = minNoLeadDays;
     const now = new Date();
     const nowWeek = getWeekNumberForDate(now);
     const entries: LowLeadAccount[] = [];
@@ -960,17 +961,19 @@ export default function TeamPerformance({
                   <label className="inline-flex items-center gap-1">
                     <span>Min days no leads</span>
                     <input
-                      type="number"
-                      min={0}
-                      value={minNoLeadDays}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={minNoLeadDaysInput}
                       onChange={(event) => {
-                        const value = Number(event.target.value);
-                        setMinNoLeadDays(Number.isNaN(value) ? 0 : value);
+                        const digits = event.target.value.replace(/\D+/g, "");
+                        const normalized = digits === "" ? "0" : String(Number(digits));
+                        setMinNoLeadDaysInput(normalized);
+                        setMinNoLeadDays(Number(normalized));
                       }}
                       className="w-16 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-gray-900 dark:text-slate-100"
                     />
                   </label>
-                  <span className="text-[11px] text-gray-500 dark:text-slate-400">0 = default to 1 day</span>
                   <label className="inline-flex items-center gap-1">
                     <input
                       type="checkbox"
