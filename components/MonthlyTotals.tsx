@@ -681,67 +681,7 @@ export default function MonthlyTotals({
             </div>
           )}
       
-      <div className="mt-6 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
-              Latest {summaryLabelForMode.toLocaleLowerCase()} avg (no cap)
-            </p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">
-              {formatAverage(latestSummary?.avgNoCap)}
-            </p>
-            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1">
-              Active accounts: {latestActiveAccounts}
-            </p>
-            <p className="text-[11px] text-gray-500 dark:text-slate-400">
-              {summaryLabelForMode}: {latestSummary?.label ?? "—"}
-            </p>
-          </div>
-          <div className="rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
-              Latest {summaryLabelForMode.toLocaleLowerCase()} avg (cap 8 leads/client)
-            </p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">
-              {formatAverage(latestSummary?.avgCap)}
-            </p>
-            <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1">
-              Cap per client: 8 leads
-            </p>
-            <p className="text-[11px] text-gray-500 dark:text-slate-400">
-              Active accounts: {latestActiveAccounts}
-            </p>
-          </div>
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-2">
-            Previous {summaryLabelForMode.toLocaleLowerCase()} averages
-          </p>
-          {previousSummaries.length > 0 ? (
-            <div className="overflow-auto rounded-md border border-gray-200 dark:border-slate-800">
-              <table className="min-w-full text-left text-sm text-gray-600 dark:text-slate-300">
-                <thead className="bg-gray-100 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-gray-500 dark:text-slate-400">
-                  <tr>
-                    <th className="px-3 py-2">{summaryLabelForMode}</th>
-                    <th className="px-3 py-2 text-right">No Cap</th>
-                    <th className="px-3 py-2 text-right">Cap 8</th>
-                  </tr>
-                </thead>
-                <tbody>
-                {previousSummaries.map((item) => (
-                  <tr key={item.label} className="border-t border-gray-200 dark:border-slate-800">
-                      <td className="px-3 py-2 text-xs font-medium text-gray-700 dark:text-slate-100">{item.label}</td>
-                      <td className="px-3 py-2 text-right text-base font-semibold text-gray-900 dark:text-slate-100">{formatAverage(item.avgNoCap)}</td>
-                      <td className="px-3 py-2 text-right text-base font-semibold text-gray-900 dark:text-slate-100">{formatAverage(item.avgCap)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-xs text-gray-500 dark:text-slate-400">No previous data available.</p>
-          )}
-        </div>
-      </div>
+      {/* Pod 3 Lead Averages moved to TeamPerformance.tsx */}
     </div>
   );
 }
