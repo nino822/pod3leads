@@ -361,7 +361,7 @@ export default function TeamPerformance({
     const avgPreviousWeek = avgForWeek(previousWeekOnChart);
 
   const lowLeadAccounts = useMemo(() => {
-    const daysFilter = minNoLeadDays === 0 ? 3 : minNoLeadDays;
+    const daysFilter = minNoLeadDays === 0 ? 1 : minNoLeadDays;
     const entries: LowLeadAccount[] = [];
     weeklyData.forEach((client) => {
       const weekEntries = Object.entries(client.weeks)
@@ -945,7 +945,7 @@ export default function TeamPerformance({
                       className="w-16 rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-gray-900 dark:text-slate-100"
                     />
                   </label>
-                  <span className="text-[11px] text-gray-500 dark:text-slate-400">0 = default to 3 days</span>
+                  <span className="text-[11px] text-gray-500 dark:text-slate-400">0 = default to 1 day</span>
                   <label className="inline-flex items-center gap-1">
                     <input
                       type="checkbox"
