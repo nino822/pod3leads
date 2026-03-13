@@ -910,21 +910,8 @@ export default function TeamPerformance({
               </div>
             </div>
         <div id="at-risk-accounts-chart" className="space-y-3 mt-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">At-risk weekly trend (latest data)</p>
-            {lineConfigs.length > 0 && (
-              <div className="flex flex-wrap gap-3 text-xs font-medium text-gray-700 dark:text-slate-200">
-                {lineConfigs.map((config) => (
-                  <span key={config.key} className="inline-flex items-center gap-1">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: config.color }}
-                    />
-                    {config.label}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
           {atRiskChartData.length > 0 && (
                 <div className="h-64 w-full rounded border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2">
@@ -944,7 +931,7 @@ export default function TeamPerformance({
                       />
                       <YAxis tick={{ fontSize: 10 }} />
                       <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: 12, marginTop: 4 }} />
+                      {/* Legend removed as requested */}
                       {lineConfigs.map((config) => (
                         <Line
                           key={config.key}
